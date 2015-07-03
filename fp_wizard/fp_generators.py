@@ -1,3 +1,5 @@
+import sys,os
+
 #Layer definitions
 LAYER_F_SILK = "F.SilkS"
 LAYER_B_SILK = "F.SilkS"
@@ -26,6 +28,7 @@ PAD_SHAPE_OVAL = "oval"
 
 PAD_TYPE_SMD = "smd"
 PAD_TYPE_THRU = "thru_hole"
+PAD_TYPE_NPTH = "np_thru_hole"
 
 DRILL_TYPE_CIRCLE = "circle"
 DRILL_TYPE_OVAL = "oval"
@@ -40,6 +43,10 @@ class Footprint:
         filename = title + ".kicad_mod"
         
         if not lib is None:
+            #check if the dir actually exists!!
+            if not os.path.exists(lib):
+                os.mkdir(lib)
+                
             filename = lib + "\\" + filename
             
         print("creating footprint -",filename)

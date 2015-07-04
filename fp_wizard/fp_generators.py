@@ -148,34 +148,38 @@ class Footprint:
         return out
 
     #draw a line from (x1,y1) to (x2,y1) on layer(s) l, thickness = t
-    def draw_line(self,x1, y1, x2, y2, layer=LAYER_F_SILK, t=DEFAULT_LINE_WIDTH):
+    def draw_line(self,x1, y1, x2, y2, layer=LAYER_F_SILK, width=DEFAULT_LINE_WIDTH):
         out = ""
         out += "(fp_line "
         out += self.start_string(x1, y1) + " "
         out += self.end_string(x2, y2) + " "
         out += "(layer " + layer + ") "
-        out += self.width_string(t)
+        out += self.width_string(width)
         out += ")\n"
         
         self.write(out)
 
-    def drill_circle(self,dia):
+    def drill_string(self,dia,offset=None):
         out = "(drill "
-        out += str(dia)
+
+        if isinstance(dia, int) or isinstance(dia, float):
+            out += str(dia) 
+        elif isinstance(dia, tuple):
+            out += DRILL_TYPE_OVAL + " "
+            dia_x, dia_y = dia
+            out += str(dia_x) + " "
+            out += str(dia_y)
+        else:
+            raise TypeError("Drill diameter should be int, float or (x,y) tuple")
+        if not offset is None:
+            x,y = offset
+            out += " (offset " + str(x) + " " + str(y) + ")"
+        
         out += ")"
 
         return out
 
-    def drill_oval(self,dia_x, dia_y):
-        out = "(drill " + DRILL_TYPE_OVAL + " "
-        out += str(dia_x)
-        out += " "
-        out += str(dia_y)
-        out += ")"
-
-        return out
-
-    def pad_string(self,pad_num, pad_type, pad_shape, pad_loc, pad_size, rotation=None, drill_size=None, layers=[]):
+    def pad_string(self,pad_num, pad_type, pad_shape, pad_loc, pad_size, rotation=None, drill_size=None, drill_offset=None, layers=[]):
 
         out = "(pad "
         out += str(pad_num)
@@ -197,16 +201,10 @@ class Footprint:
         else:
             raise TypeError("pad_size must be either int, float or tuple")
 
-
+        
         #drill size (either circular or oval)
         if not drill_size is None:
-            if isinstance(drill_size, int) or isinstance(drill_size, float):
-                out += self.drill_circle(drill_size) + " "
-            elif isinstance(drill_size, tuple):
-                dx,dy = drill_size
-                out += self.drill_oval(dx, dy) + " "
-            else:
-                raise TypeError("drill_size must be int, float or tuple")
+            out += self.drill_string(drill_size, offset = drill_offset)
 
         #layers
         out += self.layers_string(layers)
@@ -229,19 +227,19 @@ class Footprint:
         out = self.pad_string(pad_num, "smd", "oval", pad_loc, pad_size, rotation=rot, layers=layers)
         self.write(out)
         
-    def pad_thru_rect(self,pad_num, pad_loc, pad_size, drill_size, rot=None, layers=LAYERS_THRU_PAD):
+    def pad_thru_rect(self,pad_num, pad_loc, pad_size, drill_size, drill_offset=None, rot=None, layers=LAYERS_THRU_PAD):
 
-        out = self.pad_string(pad_num, "thru", "rect", pad_loc, pad_size, drill_size = drill_size, rotation=rot, layers = layers)
+        out = self.pad_string(pad_num, "thru", "rect", pad_loc, pad_size, drill_size = drill_size, drill_offset=drill_offset, rotation=rot, layers = layers)
         self.write(out)
         
-    def pad_thru_circle(self,pad_num, pad_loc, pad_size, drill_size, rotation=None, layers=LAYERS_THRU_PAD):
+    def pad_thru_circle(self,pad_num, pad_loc, pad_size, drill_size, drill_offset=None, rotation=None, layers=LAYERS_THRU_PAD):
 
-        out = self.pad_string(pad_num, "thru", "circle", pad_loc, pad_size, drill_size = drill_size, rot=rot, layers = layers)
+        out = self.pad_string(pad_num, "thru", "circle", pad_loc, pad_size, drill_size = drill_size, drill_offset=drill_offset, rot=rot, layers = layers)
         self.write(out)
         
-    def pad_thru_oval(self,pad_num, pad_loc, pad_size, drill_size, rotation=None, layers=LAYERS_THRU_PAD):
+    def pad_thru_oval(self,pad_num, pad_loc, pad_size, drill_size, drill_offset=None, rotation=None, layers=LAYERS_THRU_PAD):
 
-        out = self.pad_string(pad_num, "thru", "oval", pad_loc, pad_size, drill_size=drill_size, rot=rot, layers=layers)
+        out = self.pad_string(pad_num, "thru", "oval", pad_loc, pad_size, drill_size=drill_size, drill_offset=drill_offset, rot=rot, layers=layers)
         self.write(out)
         
     #make a linear pattern of pads
@@ -253,7 +251,7 @@ class Footprint:
     #delta_pos (x,y) tuple of position increment to next pad
     #starting_pad ID number of the first pad (default = 1)
     #pad_increment Increment of ID numbers between pads (e.g. starting_pad=1, pad_increment=2 gives pads 1,3,5,7
-    def pad_linear_pattern(self,pad_type, pad_shape, pad_size, num_pads, start_pos, delta_pos, starting_pad=1, pad_increment = 1, drill_size = None, rot=None, layers = []): 
+    def pad_linear_pattern(self,pad_type, pad_shape, pad_size, num_pads, start_pos, delta_pos, starting_pad=1, pad_increment = 1, drill_size = None, drill_offset=None, rot=None, layers = []): 
 
         out = ""
 
@@ -265,7 +263,7 @@ class Footprint:
         for i in range(num_pads):
             out += "\t"
 
-            out += self.pad_string(pad_num, pad_type, pad_shape, (x,y), pad_size, drill_size=drill_size, rotation=rot, layers=layers)
+            out += self.pad_string(pad_num, pad_type, pad_shape, (x,y), pad_size, drill_size=drill_size, drill_offset=drill_offset, rotation=rot, layers=layers)
             
             x += dx
             y += dy
@@ -283,7 +281,7 @@ class Footprint:
     #delta_pos (x,y) tuple of position increment to next pad
     #starting_pad ID number of the first pad (default = 1)
     #pad_increment Increment of ID numbers between pads (e.g. starting_pad=1, pad_increment=2 gives pads 1,3,5,7
-    def pad_linear_pattern_from_center(self,pad_type, pad_shape, pad_size, num_pads, start_pos, delta_pos, starting_pad=1, pad_increment = 1, drill_size = None, rot=None, layers = []):
+    def pad_linear_pattern_from_center(self,pad_type, pad_shape, pad_size, num_pads, start_pos, delta_pos, starting_pad=1, pad_increment = 1, drill_size = None, drill_offset=None, rot=None, layers = []):
         #work out where the starting position should be!
         dx, dy = delta_pos
 
@@ -304,7 +302,7 @@ class Footprint:
         for i in range(num_pads):
             out += "\t"
 
-            out += self.pad_string(pad_num, pad_type, pad_shape, (x,y), pad_size, drill_size=drill_size, rotation=rot, layers=layers)
+            out += self.pad_string(pad_num, pad_type, pad_shape, (x,y), pad_size, drill_size=drill_size, drill_offset=drill_offset, rotation=rot, layers=layers)
 
             pad_num += pad_increment
             

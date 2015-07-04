@@ -88,9 +88,13 @@ def JST_PAD_TopEntry(n):
     
     #draw the tab also
     #6 wide, 2 high
-    fp.draw_line(-3, y2, -3, y2 + 2)
-    fp.draw_line( 3, y2,  3, y2 + 2)
-    fp.draw_line(-3, y2 + 2, 3, y2 + 2)
+    fp.draw_line(-2.5, y2, -2.5, y2 + 1)
+    fp.draw_line(-5, y2,  -5, y2 + 1)
+    fp.draw_line(-5, y2+1, -2.5, y2 + 1)
+
+    fp.draw_line(2.5, y2, 2.5, y2 + 1)
+    fp.draw_line(5, y2,  5, y2 + 1)
+    fp.draw_line(5, y2+1, 2.5, y2 + 1)
                             
     fp.finish()
 

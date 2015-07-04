@@ -81,24 +81,31 @@ def JST_PAD_TopEntry(n):
                             
     #outline
     #outine width = B
+    B = n + 2
+    A = n - 2
     W = n + 2
     H = 8
-    
-    x1 = -W / 2
-    x2 =  W / 2
-    y1 = -10.7
-    y2 = PITCH + 0.5
-    
-    fp.draw_line(x1, y2, x2, y2)
-    fp.draw_line(x1, y1, x2, y1)
-    fp.draw_line(x1, y1, x1, y2)
-    fp.draw_line(x2, y1, x2, y2)
-    
-    #draw the tab also
-    #6 wide, 2 high
-    fp.draw_line(-3, y2, -3, y2 + 2)
-    fp.draw_line( 3, y2,  3, y2 + 2)
-    fp.draw_line(-3, y2 + 2, 3, y2 + 2)
+
+    a = A/2
+    b = B/2
+
+    t1 = -8
+    t2 = -9.5
+
+    #draw a line along the top, at y=-10
+    fp.draw_line(-a+2,t1,a-2,t1)
+    fp.draw_line(-a+2,t1,-a+1,t2)
+    fp.draw_line(a-2,t1,a-1,t2)
+    fp.draw_line(-a+1,t2,-b,t2)
+    fp.draw_line(a-1,t2,b,t2)
+
+    t3 = 2.5
+
+    fp.draw_line(b,t2,b,t3)
+    fp.draw_line(-b,t2,-b,t3)
+
+    fp.draw_line(b,t3,b-1,t3)
+    fp.draw_line(-b,t3,-b+1,t3)
                             
     fp.finish()
 
@@ -108,4 +115,3 @@ for c in conns:
     JST_PAD_TopEntry(c)
     
 print("Done")
-input()

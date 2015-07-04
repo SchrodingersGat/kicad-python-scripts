@@ -12,7 +12,7 @@ def JST_PAD_TopEntry(n):
     if not (n%2 == 0): #whoops!
         return
         
-    n_col = n / 2
+    n_col = int(n / 2)
     
     title = "Connector_JST_PAD_B" + str(n).zfill(2) + "B-PADSS-F"
     fp = Footprint(title, DESCRIPTION, lib=LIB, ref_pos = (0,6), value_pos = (0,-6))
@@ -68,9 +68,13 @@ def JST_PAD_TopEntry(n):
     
     #draw the tab also
     #6 wide, 2 high
-    fp.draw_line(-3, y2, -3, y2 + 2)
-    fp.draw_line( 3, y2,  3, y2 + 2)
-    fp.draw_line(-3, y2 + 2, 3, y2 + 2)
+    fp.draw_line(-2.5, y2, -2.5, y2 + 1)
+    fp.draw_line(-5, y2,  -5, y2 + 1)
+    fp.draw_line(-5, y2+1, -2.5, y2 + 1)
+
+    fp.draw_line(2.5, y2, 2.5, y2 + 1)
+    fp.draw_line(5, y2,  5, y2 + 1)
+    fp.draw_line(5, y2+1, 2.5, y2 + 1)
                             
     fp.finish()
 

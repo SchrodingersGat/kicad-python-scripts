@@ -69,7 +69,7 @@ excluded_footprints = [
 
 #-----</Configure>---------------------------------------------------------------
 
-
+#This is a stupid test change
 
 class xmlElement():
     """xml element which can represent all nodes of the netlist tree.  It can be

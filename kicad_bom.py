@@ -38,12 +38,7 @@ import kicad_netlist_reader
 
 args = sys.argv
 
-#Extract input file and output dir information
-if len(args) < 2: 
-    #close("Not enough arguments supplied to script")
-    xml_file = "C:\\Users\\Oliver\\Google Drive\\Reverse GeoCache Box\\PCB\\USB_Geocache.xml"
-else:
-    xml_file = args[1]
+xml_file = args[1]
 
 if not xml_file.endswith(".xml"):
     close(xml_file + " is not a .xml file")
@@ -226,4 +221,4 @@ except:
 	pass
 	
 	
-raw_input("Done. Press <Enter> to close")
+#raw_input("Done. Press <Enter> to close")

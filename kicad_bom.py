@@ -219,6 +219,3 @@ try:
 	debug("Generated BOM for " + str(numComponents) + " components.")
 except:
 	pass
-	
-	
-#raw_input("Done. Press <Enter> to close")

@@ -54,6 +54,9 @@ output_file = xml_file.replace(".xml",".csv")
 debug("Saving BOM to:")
 debug(output_file)
 
+###Extra fields to search for and add the info to the BOM
+EXTRA_FIELDS = ["Notes","Manufacturer","Part Number","Vendor","Alt Vendor"]
+
 # Open a file to write to, if the file cannot be opened output to stdout
 # instead
 try:
@@ -68,20 +71,17 @@ try: #main try block (catch all errors)
 	# Create a new csv writer object to use as the output formatter
 	out = csv.writer(f, lineterminator='\n', delimiter='\t') #, quotechar='\"',quoting=csv.QUOTE_NONE)
 
-	#Data headers
-	out.writerow([
-					'Description',
-					'Notes',
-					'References', 
-					'Value',
-#					'KiCAD Library Name',
-					'Footprint',
-					'Manufacturer',
-					'Part Number',
-					'Vendor',
-					'Vendor Code',
-					'Quantity'
-					])
+	row = ["Description","References","Value","Footprint"]
+	
+	for field in EXTRA_FIELDS:
+		row.append(field)
+		
+	row.append("Quantity")
+	row.append("Unit Price")
+	row.append("Cost Per Board")
+	
+	#write the headers
+	out.writerow(row)
 
 	# Get all of the components in groups of matching parts + values
 	# (see ky_generic_netlist_reader.py)
@@ -108,97 +108,45 @@ try: #main try block (catch all errors)
 
 		refs = ""
 
-		vendor = ""
-		vendorPartNumber = ""
+		###Extra fields that are supported by this script
+		fields = [""] * len(EXTRA_FIELDS)
 		
-		altVendor = ""
-		altVendorPartNumber = ""
-		
-		manu = ""
-		manuPartNumber = ""
-		
-		notes = ""
-		
-
 		# Add the reference of every component in the group and keep a reference
 		# to the component so that the other data can be filled in once per group
 		for component in group:
 			refs += component.getRef() + ", "
 			c = component
 			
-			try:
-				partNotes = c.getField("Notes")
-				if (partNotes == ""):
-					pass
-				else:
-					if (notes == ""):
-						notes = partNotes
-					elif (notes == partNotes):
-						pass
-					else:
-						notes = notes +", " + partNotes
-			except:
-				pass
+			fieldInfo = ""
 			
-			#Extract the vendor (supplier) info
-			try:
-				vendorString = c.getField("Vendor")
-				if (vendorString == ""): 
+			for i,field in enumerate(EXTRA_FIELDS):
+				try:
+					fieldInfo = c.getField(field)
+					
+					if (fieldInfo == ""): pass
+					else:
+						#if blank, set it!
+						if (fields[i] == ""): fields[i] = fieldInfo
+						elif (fields[i] == fieldInfo): pass
+						else:
+							fields[i] = fields[i] + ", " + fieldInfo #append new data
+				except:
 					pass
-				else:
-					vs = vendorString.split(":")
-					if len(vs) == 2: # "Vendor:VendorPartNumber"
-						if (vendor == ""): # no vendor already supplied
-							vendor = vs[0]
-						
-						if (vendorPartNumber == ""): #no vpn already supplied
-							vendorPartNumber = vs[1]
-					elif len(vs) == 1: # "vendor"
-						if (vendorPartNumber == ""): # no vendor already supplied
-							vendorPartNumber = vs[0]
-			except:
-				pass
-				
-				
-			##extract the manufacturer:partnumber info
-			try:
-				manuString = c.getDatasheet()
-				
-				ms = manuString.split(":")
-				
-				if len(ms) == 2: # "Manufacturer:ManufacturerPartNumber"
-					if (manu == ""):
-						manu = ms[0]
-					if manuPartNumber == "":
-						manuPartNumber = ms[1]
-				elif len(ms) == 1: # "ManufacturerPartNumber"
-					if (manuPartNumber == ""):
-						manuPartNumber = ms[0]
-				
-			except: 
-				pass
+
+
+
 		##delete thr trailing comma
 		if len(refs) > 0:
 			refs = refs[:-2]
-		
+
+			row = [c.getDescription(), refs, c.getValue(), c.getFootprint().split(":")[-1]]
+
+			for field in fields:
+				row.append(field)
+
+			row.append(len(group)) #number of components
 			
-		# Fill in the component groups common data
-		out.writerow([
-					c.getDescription(),	
-					notes,
-					refs,
-					c.getValue(),
-					#c.getLibName() + "/" + c.getPartName(),
-					c.getFootprint().split(":")[-1],
-					manu, #manufacturer
-					manuPartNumber, #"", #manufacturer part number
-					vendor, #"", #supplier
-					vendorPartNumber, #supplier code
-					len(group)
-					])
-					
-	#    out.writerow([refs, len(group), c.getValue(), c.getLibName() + "/" + c.getPartName(), c.getFootprint(),
-	#        c.getDescription(), c.getField("Vendor")])
+			out.writerow(row)
 
 	#add extra data to the bottom of the file
 	out.writerow([])

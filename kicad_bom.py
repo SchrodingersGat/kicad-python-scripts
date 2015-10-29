@@ -127,7 +127,8 @@ try: #main try block (catch all errors)
 					else:
 						#if blank, set it!
 						if (fields[i] == ""): fields[i] = fieldInfo
-						elif (fields[i] == fieldInfo): pass
+						elif (fields[i] == fieldInfo): pass #info is the same
+						elif (fieldInfo.lower() in fields[i].lower()): pass #info already contained
 						else:
 							fields[i] = fields[i] + ", " + fieldInfo #append new data
 				except:

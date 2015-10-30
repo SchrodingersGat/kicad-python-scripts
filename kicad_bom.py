@@ -54,8 +54,15 @@ output_file = xml_file.replace(".xml",".csv")
 debug("Saving BOM to:")
 debug(output_file)
 
-###Extra fields to search for and add the info to the BOM
-EXTRA_FIELDS = ["Notes","Manufacturer","Part Number","Vendor","Alt Vendor"]
+#Extra Column headings
+COLUMNS = ["Description","Reference","Value","Rating","Footprint","Manufacturer","Part Number","Vendor","Vendor Code",
+"Quantity","Price","Cost Per Board","","Notes","Datasheet"]
+
+COL_DESC = 0
+COL_REF = 1
+COL_VALUE = 2
+COL_FOOT = 4
+COL_QUAN = 9
 
 # Open a file to write to, if the file cannot be opened output to stdout
 # instead
@@ -71,17 +78,8 @@ try: #main try block (catch all errors)
 	# Create a new csv writer object to use as the output formatter
 	out = csv.writer(f, lineterminator='\n', delimiter='\t') #, quotechar='\"',quoting=csv.QUOTE_NONE)
 
-	row = ["Description","References","Value","Footprint"]
-	
-	for field in EXTRA_FIELDS:
-		row.append(field)
-		
-	row.append("Quantity")
-	row.append("Unit Price")
-	row.append("Cost Per Board")
-	
 	#write the headers
-	out.writerow(row)
+	out.writerow(COLUMNS)
 
 	# Get all of the components in groups of matching parts + values
 	# (see ky_generic_netlist_reader.py)
@@ -109,7 +107,7 @@ try: #main try block (catch all errors)
 		refs = ""
 
 		###Extra fields that are supported by this script
-		fields = [""] * len(EXTRA_FIELDS)
+		fields = [""] * len(COLUMNS)
 		
 		# Add the reference of every component in the group and keep a reference
 		# to the component so that the other data can be filled in once per group
@@ -119,7 +117,10 @@ try: #main try block (catch all errors)
 			
 			fieldInfo = ""
 			
-			for i,field in enumerate(EXTRA_FIELDS):
+			for i,field in enumerate(COLUMNS):
+				if field == "":
+					fieldInfo = ""
+					continue
 				try:
 					fieldInfo = c.getField(field)
 					
@@ -136,27 +137,27 @@ try: #main try block (catch all errors)
 
 
 
-		##delete thr trailing comma
+		#if there are more than zero components in this group
 		if len(refs) > 0:
+			##delete thr trailing comma
 			refs = refs[:-2]
-
-			row = [c.getDescription(), refs, c.getValue(), c.getFootprint().split(":")[-1]]
-
-			for field in fields:
-				row.append(field)
-
-			row.append(len(group)) #number of components
 			
-			out.writerow(row)
+			#extract special data
+			fields[COL_REF] = refs
+			fields[COL_VALUE] = c.getValue()
+			fields[COL_DESC] = c.getDescription()
+			fields[COL_QUAN] = len(group)
+			fields[COL_FOOT] = c.getFootprint().split(":")[-1]
+			
+			out.writerow(fields)
 
 	#add extra data to the bottom of the file
 	out.writerow([])
 	out.writerow([])
-	out.writerow([])
+	out.writerow(['Component Count:', len(net.components)])
 	out.writerow(['Source:', net.getSource()])
 	out.writerow(['Date:', net.getDate()])
 	out.writerow(['Tool:', net.getTool()])
-	out.writerow(['Component Count:', len(net.components)])
 			
 			
 	

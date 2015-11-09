@@ -67,6 +67,13 @@ excluded_footprints = [
     #'MOUNTHOLE'
     ]
 
+# When comparing part names, components will match if they are both elements of the
+# same set defined here
+partname_alias_sets = [
+    ["c", "c_small"],
+    ["r", "r_small"]
+    ]
+
 #-----</Configure>---------------------------------------------------------------
 
 
@@ -311,9 +318,18 @@ class comp():
         result = False
         if self.getValue().lower() == other.getValue().lower():
             if self.getLibName() == other.getLibName():
-                if self.getPartName().lower() == other.getPartName().lower():
-					if self.getFootprint() == other.getFootprint():
-						result = True
+                if self.getFootprint() == other.getFootprint():
+
+                    this_partname = self.getPartName().lower()
+                    other_partname = other.getPartName().lower()
+
+                    if this_partname == other_partname:
+                        result = True
+                    else:
+                        for alias_set in partname_alias_sets:
+                            if this_partname in alias_set and other_partname in alias_set:
+                                result = True
+                
         return result
 
     def setLibPart(self, part):

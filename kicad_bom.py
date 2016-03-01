@@ -13,20 +13,20 @@ import os
 sys.path.append(os.getcwd())
 
 def debug(s):
-        DEBUG = True
-        if (DEBUG == True):
-                print(s)
+		DEBUG = True
+		if (DEBUG == True):
+				print(s)
 
 def close(msg):
-        print(msg)
-        sys.exit(0)
+		print(msg)
+		sys.exit(0)
 
 """
-    @package
-    Generate a Tab delimited list (csv file type).
-    Components are sorted by ref and grouped by value
-    Fields are (if exist)
-    'Ref', 'Qnty', 'Value', 'Sch lib name', 'footprint', 'Description', 'Vendor'
+	@package
+	Generate a Tab delimited list (csv file type).
+	Components are sorted by ref and grouped by value
+	Fields are (if exist)
+	'Ref', 'Qnty', 'Value', 'Sch lib name', 'footprint', 'Description', 'Vendor'
 """
 
 #'better' sorting function which sorts by NUMERICAL value not ASCII
@@ -41,10 +41,10 @@ args = sys.argv
 xml_file = args[1]
 
 if not xml_file.endswith(".xml"):
-    close(xml_file + " is not a .xml file")
+	close(xml_file + " is not a .xml file")
 
 debug("Netlist file: " + xml_file)
-    
+	
 # Generate an instance of a generic netlist, and load the netlist tree from
 # the command line option. If the file doesn't exist, execution will stop
 net = kicad_netlist_reader.netlist(xml_file)
@@ -69,19 +69,13 @@ COL_QUAN = 9
 # Open a file to write to, if the file cannot be opened output to stdout
 # instead
 try:
-    f = open(output_file, 'w')
+	f = open(output_file, 'w')
 except IOError:
-    e = "Can't open output file for writing: " + sys.argv[2]
-    print(__file__, ":", e, sys.stderr)
-    f = sys.stdout
+	e = "Can't open output file for writing: " + sys.argv[2]
+	print(__file__, ":", e, sys.stderr)
+	f = sys.stdout
 
 try: #main try block (catch all errors)
-	
-	# Create a new csv writer object to use as the output formatter
-	out = csv.writer(f, lineterminator='\n', delimiter='\t') #, quotechar='\"',quoting=csv.QUOTE_NONE)
-	
-	#write the headers
-	out.writerow(COLUMNS)
 
 	# Get all of the components in groups of matching parts + values
 	# (see ky_generic_netlist_reader.py)
@@ -102,10 +96,15 @@ try: #main try block (catch all errors)
 	except:
 		debug ("Unexpected Error: " + str(sys.exc_info()[1]))
 		raw_input()
-			
-	# Output all of the component information
+		
+	# Create a new csv writer object to use as the output formatter
+	out = csv.writer(f, lineterminator='\n', delimiter=',') #, quotechar='\"',quoting=csv.QUOTE_NONE)
+	
+	#write the headers
+	out.writerow(COLUMNS)
+	
+	#extract the component info
 	for group in grouped:
-
 		refs = ""
 
 		###Extra fields that are supported by this script
@@ -137,6 +136,10 @@ try: #main try block (catch all errors)
 				except:
 					pass
 
+	# Output all of the component information
+	for group in grouped:
+
+
 
 
 		#if there are more than zero components in this group
@@ -152,7 +155,7 @@ try: #main try block (catch all errors)
 			fields[COL_FOOT] = c.getFootprint().split(":")[-1] 
 			
 			out.writerow(fields)
-            
+			
 	#add extra data to the bottom of the file
 	out.writerow([])
 	out.writerow([])

@@ -56,12 +56,14 @@ debug(output_file)
 
 #Extra Column headings
 COLUMNS = ["Description","Reference","Value","Rating","Footprint","Manufacturer","Part Number","Vendor","Vendor Code",
-"Quantity","Price","Cost Per Board","","Notes","Datasheet"]
+"Quantity","Price","Cost Per Board","","Notes","Datasheet","URL"]
 
 COL_DESC = 0
 COL_REF = 1
 COL_VALUE = 2
 COL_FOOT = 4
+COL_MANU = 5
+COL_PN = 6
 COL_QUAN = 9
 
 # Open a file to write to, if the file cannot be opened output to stdout
@@ -77,7 +79,7 @@ try: #main try block (catch all errors)
 	
 	# Create a new csv writer object to use as the output formatter
 	out = csv.writer(f, lineterminator='\n', delimiter='\t') #, quotechar='\"',quoting=csv.QUOTE_NONE)
-
+	
 	#write the headers
 	out.writerow(COLUMNS)
 
@@ -147,10 +149,10 @@ try: #main try block (catch all errors)
 			fields[COL_VALUE] = c.getValue()
 			fields[COL_DESC] = c.getDescription()
 			fields[COL_QUAN] = len(group)
-			fields[COL_FOOT] = c.getFootprint().split(":")[-1]
+			fields[COL_FOOT] = c.getFootprint().split(":")[-1] 
 			
 			out.writerow(fields)
-
+            
 	#add extra data to the bottom of the file
 	out.writerow([])
 	out.writerow([])

@@ -13,8 +13,9 @@ DELIMITER = ","
 
 sys.path.append(os.getcwd())
 
-import kicad_netlist_reader
-from kicad_netlist_reader import CSV_COLUMNS as COLUMNS
+import bomfunk_netlist_reader
+import bomfunk_csv
+from bomfunk_csv import CSV_DEFAULT as COLUMNS
 
 global DEBUG
 DEBUG = True
@@ -61,7 +62,7 @@ if not xml_file.endswith(".xml"):
     error(xml_file + " is not a .xml file")
 
 #read out the netlist
-net = kicad_netlist_reader.netlist(xml_file)
+net = bomfunk_netlist_reader.netlist(xml_file)
 
 #extract the components
 components = net.getInterestingComponents()
@@ -80,31 +81,13 @@ if (os.path.exists(csv_file)) and (os.path.isfile(csv_file)):
 
     lines = []
 
-    with open(csv_file,'r') as csv_read:
-        reader = csv.reader(csv_read, delimiter=DELIMITER, lineterminator='\n')
-        
-        debug("Reading from " + csv_file)
-        
-        for line in reader:
-            lines.append(line)
-            
-    if len(lines) > 0:
-            
-        #read out the headings
-        headings = lines[0]
-        
-        row = {}
-        
-        for line in lines[1:]:
-            #dict the row data
-            row = dict(zip(headings,line))
-            
-            #try to match groups
-            for g in groups:
-                if g.compareCSVLine(row) == True:
-                
-                    #back-copy the CSV data
-                    g.addCSVLine(row)
+    rows = bomfunk_csv.getRows(csv_file)
+
+    for row in rows:
+        for group in groups:
+            if group.compareCSVLine(row):
+                group.csvFields = row
+                break
             
     #make a temporary copy
     shutil.copyfile(csv_file,csv_file + ".tmp")

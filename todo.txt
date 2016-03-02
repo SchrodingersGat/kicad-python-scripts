@@ -1,0 +1,8 @@
+Auto-complete on Manufacturer / Supplier columns
+Conflict management for situations where KiCAD and CSV have different values
+Auto-insert for digikey/e14/mouser parts
+Price calculation based on number of PCBs to load
+Generate BoM per-supplier
+Save/Read xls format
+Background color to show which fields have been edited by the user
+"Enter" key moves cursor down one cell

@@ -433,6 +433,7 @@ class ComponentGroup():
         if not self.csvFields[field]: return ""
         return str(self.csvFields[field])
         
+        
     def compareCSVLine(self, line):
         """
         Compare a line (dict) and see if it matches this component group
@@ -495,9 +496,10 @@ class ComponentGroup():
             return
         elif (not field in self.fields.keys()) or (self.fields[field] == None) or (self.fields[field] == ""):
             self.fields[field] = fieldData
-        elif fieldData.lower() in self.fields[field]:
+        elif fieldData.lower() in self.fields[field].lower():
             return
         else:
+            print("Conflict:",self.fields[field],",",fieldData)
             self.fields[field] += " " + fieldData
         
         

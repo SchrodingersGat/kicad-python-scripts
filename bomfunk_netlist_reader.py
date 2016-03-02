@@ -524,7 +524,9 @@ class ComponentGroup():
         self.fields["Footprint"] = self.components[0].getFootprint().split(":")[-1]
         
     def getRow(self, columns):
-        return [self.fields[key] if key in self.fields.keys() else "" for key in columns]
+        row = [self.getField(key) for key in columns]
+        #print(row)
+        return row
 
 class netlist():
     """ Kicad generic netlist class. Generally loaded from a kicad generic

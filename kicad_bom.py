@@ -93,39 +93,6 @@ if (os.path.exists(csv_file)) and (os.path.isfile(csv_file)):
     shutil.copyfile(csv_file,csv_file + ".tmp")
             
 #write out the datas
-with open(csv_file,"w") as csv_write:
-    writer = csv.writer(csv_write, delimiter=DELIMITER, lineterminator='\n')
-    
-    #write the columns
-    writer.writerow(COLUMNS)
-    
-    #look the the groups
-    for group in groups:
-                
-        if group.getCount() == 0: continue
-        
-        writer.writerow(group.getRow(COLUMNS))
-        
-    #write out some blank rows
-    for i in range(2):
-        writer.writerow([])
-        
-    #write out the TOTAL column
-    #(start with 'details' info))
-    total = [""] * 9 + ["Total:",str(len(net.components))]
-    
-    writer.writerow(total)
-    
-    for i in range(5):
-        writer.writerow([])
-        
-    #write out version info
-    
-    #add extra data to the bottom of the file
-    writer.writerow(['Component Count:', len(net.components)])
-    writer.writerow(['Source:', net.getSource()])
-    writer.writerow(['Version:',net.getVersion()])
-    writer.writerow(['Date:', net.getDate()])
-    writer.writerow(['Tool:', net.getTool()])
+bomfunk_csv.saveRows(csv_file, groups, net.getSource(), net.getVersion(), net.getDate())
 
 close("Complete")

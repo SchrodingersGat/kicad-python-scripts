@@ -66,7 +66,12 @@ class BOMWidget(QtGui.QMainWindow):
                 self.csvFile = arg
 
         if not self.xmlFile == "":
+
+            if self.csvFile == "":
+                self.csvFile = self.xmlFile.replace(".xml",".csv")
+            
             self.extractKicadData()
+            self.loadCSVFile(self.csvFile)
             self.updateRows()
 
     def initUI(self):
@@ -96,6 +101,10 @@ class BOMWidget(QtGui.QMainWindow):
             os.getcwd(),
             "CSV Files (*.csv)")
 
+        self.loadCSVFile(self,fname)
+
+    def loadCSVFile(self, fname):
+
         #blank file
         if not fname: return
 
@@ -122,6 +131,10 @@ class BOMWidget(QtGui.QMainWindow):
             "Load .xml KiCAD Netlist File",
             os.getcwd(),
             "XML Files (*.xml)")
+
+        self.loadXMLFile(fname)
+
+    def loadXMLFile(self, fname):
 
         #blank file
         if not fname: return
@@ -155,7 +168,7 @@ class BOMWidget(QtGui.QMainWindow):
             else:
                 return False
 
-        return bomfunk_csv.saveRows(fname, self.componentGroups, self.kicadSource, self.kicadVersion, self.kicadDate)
+        return bomfunk_csv.saveRows(self.csvFile, self.componentGroups, self.kicadSource, self.kicadVersion, self.kicadDate)
 
     def updateRows(self):
 
@@ -172,6 +185,7 @@ class BOMWidget(QtGui.QMainWindow):
 
                 if item == 0 or not item:
                     item = QtGui.QTableWidgetItem()
+                    self.table.setItem(row,col,item)
 
 #                print("Heading:",heading,group.getField(heading))
                 kicadData = group.getField(heading)
@@ -200,11 +214,9 @@ class BOMWidget(QtGui.QMainWindow):
                         data = kicadData
                     else: #conflict! (use KiCAD data in preference)
                         data = kicadData
-                        print("Conflict:",data,csvData)
                         item.setBackgroundColor(colorConflict())
 
                 item.setText(data)
-                self.table.setItem(row,col,item)
 
         self.reloading = False
 

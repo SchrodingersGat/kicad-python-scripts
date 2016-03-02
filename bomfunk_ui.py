@@ -65,6 +65,9 @@ class BOMWidget(QtGui.QMainWindow):
             if self.csvFile == "" and arg.endswith(".csv") and os.path.isfile(arg):
                 self.csvFile = arg
 
+        if self.xmlFile == "" and not self.csvFile == "":
+            self.xmlFile = self.csvFile.replace(".csv",".xml")
+            
         if not self.xmlFile == "":
 
             if self.csvFile == "":

@@ -1,7 +1,3 @@
-#KiCAD BOM Generation script
-
-#Usage:
-#python "path/to/script" "%I" "%O"
 
 from __future__ import print_function
 
@@ -9,158 +5,144 @@ import re
 import csv
 import sys
 import os
+import shutil
+
+import argparse
+
+DELIMITER = ","
 
 sys.path.append(os.getcwd())
 
-def debug(s):
-		DEBUG = True
-		if (DEBUG == True):
-				print(s)
-
-def close(msg):
-		print(msg)
-		sys.exit(0)
-
-"""
-	@package
-	Generate a Tab delimited list (csv file type).
-	Components are sorted by ref and grouped by value
-	Fields are (if exist)
-	'Ref', 'Qnty', 'Value', 'Sch lib name', 'footprint', 'Description', 'Vendor'
-"""
-
-#'better' sorting function which sorts by NUMERICAL value not ASCII
-def natural_sort(string):
-	return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)',string)]
-
-# Import the KiCad python helper module and the csv formatter
 import kicad_netlist_reader
+from kicad_netlist_reader import CSV_COLUMNS as COLUMNS
 
-args = sys.argv
+global DEBUG
+DEBUG = True
 
-xml_file = args[1]
+def debug(msg):
+    global DEBUG
+    if DEBUG == True:
+        print(msg)
+
+def close(msg=""):
+    print(msg)
+    sys.exit(0)
+
+def error(msg=""):
+    print(msg)
+    sys.exit(-1)
+
+#individual components
+components = []
+
+#component groups
+groups = []
+
+#get the input file (.xml)
+
+parser = argparse.ArgumentParser()
+parser.add_argument('net',help="KiCAD netlist file, .xml format",type=str,nargs=1)
+args = parser.parse_args()
+
+xml_file = args.net[0]
+
+#xml_file = "C:\\Users\\Oliver\\Google Drive\\Reverse GeoCache Box\\PCB\\USB_Geocache.xml"
+
+#convert to windows-style if needed
+if (os.path.sep == '\\'):
+    xml_file = xml_file.replace("/",os.path.sep)
+
+print("File: " + xml_file)
+
+if not os.path.isfile(xml_file):
+    error(xml_file + " is not a file")
 
 if not xml_file.endswith(".xml"):
-	close(xml_file + " is not a .xml file")
+    error(xml_file + " is not a .xml file")
 
-debug("Netlist file: " + xml_file)
-	
-# Generate an instance of a generic netlist, and load the netlist tree from
-# the command line option. If the file doesn't exist, execution will stop
+#read out the netlist
 net = kicad_netlist_reader.netlist(xml_file)
 
-output_file = xml_file.replace(".xml",".csv")
+#extract the components
+components = net.getInterestingComponents()
 
-debug("Saving BOM to:")
-debug(output_file)
+#group the components
+groups = net.groupComponents(components)
+   
+#now, look for a corresponding .csv file (does it exist?)
+csv_file = xml_file.replace(".xml",".csv")
 
-#Extra Column headings
-COLUMNS = ["Description","Reference","Value","Rating","Footprint","Manufacturer","Part Number","Vendor","Vendor Code",
-"Quantity","Price","Cost Per Board","","Notes","Datasheet","URL"]
+###TODO
 
-COL_DESC = 0
-COL_REF = 1
-COL_VALUE = 2
-COL_FOOT = 4
-COL_MANU = 5
-COL_PN = 6
-COL_QUAN = 9
+###Re-load in the CSV values (if they match!)
 
-# Open a file to write to, if the file cannot be opened output to stdout
-# instead
-try:
-	f = open(output_file, 'w')
-except IOError:
-	e = "Can't open output file for writing: " + sys.argv[2]
-	print(__file__, ":", e, sys.stderr)
-	f = sys.stdout
+if (os.path.exists(csv_file)) and (os.path.isfile(csv_file)):
 
-try: #main try block (catch all errors)
+    lines = []
 
-	# Get all of the components in groups of matching parts + values
-	# (see ky_generic_netlist_reader.py)
-	#grouped = net.groupComponents()
+    with open(csv_file,'r') as csv_read:
+        reader = csv.reader(csv_read, delimiter=DELIMITER, lineterminator='\n')
+        
+        debug("Reading from " + csv_file)
+        
+        for line in reader:
+            lines.append(line)
+            
+    if len(lines) > 0:
+            
+        #read out the headings
+        headings = lines[0]
+        
+        row = {}
+        
+        for line in lines[1:]:
+            #dict the row data
+            row = dict(zip(headings,line))
+            
+            #try to match groups
+            for g in groups:
+                if g.compareCSVLine(row) == True:
+                
+                    #back-copy the CSV data
+                    g.addCSVLine(row)
+            
+    #make a temporary copy
+    shutil.copyfile(csv_file,csv_file + ".tmp")
+            
+#write out the datas
+with open(csv_file,"w") as csv_write:
+    writer = csv.writer(csv_write, delimiter=DELIMITER, lineterminator='\n')
+    
+    #write the columns
+    writer.writerow(COLUMNS)
+    
+    #look the the groups
+    for group in groups:
+                
+        if group.getCount() == 0: continue
+        
+        writer.writerow(group.getRow(COLUMNS))
+        
+    #write out some blank rows
+    for i in range(2):
+        writer.writerow([])
+        
+    #write out the TOTAL column
+    #(start with 'details' info))
+    total = [""] * 9 + ["Total:",str(len(net.components))]
+    
+    writer.writerow(total)
+    
+    for i in range(5):
+        writer.writerow([])
+        
+    #write out version info
+    
+    #add extra data to the bottom of the file
+    writer.writerow(['Component Count:', len(net.components)])
+    writer.writerow(['Source:', net.getSource()])
+    writer.writerow(['Version:',net.getVersion()])
+    writer.writerow(['Date:', net.getDate()])
+    writer.writerow(['Tool:', net.getTool()])
 
-	components = net.getInterestingComponents()
-	
-	numComponents = len(components)
-	
-	grouped = net.groupComponents(components)
-		
-	try:
-		for i in range(len(grouped)):
-			group = grouped[i]
-			#use a much better sorting algorhythm
-			group = sorted(group, key = lambda g: natural_sort(g.getRef()))
-			grouped[i] = group
-	except:
-		debug ("Unexpected Error: " + str(sys.exc_info()[1]))
-		raw_input()
-		
-	# Create a new csv writer object to use as the output formatter
-	out = csv.writer(f, lineterminator='\n', delimiter=',') #, quotechar='\"',quoting=csv.QUOTE_NONE)
-	
-	#write the headers
-	out.writerow(COLUMNS)
-	
-	#extract the component info
-	for group in grouped:
-		refs = " ".join([c.getRef() for c in group])
-
-		###Extra fields that are supported by this script
-		fields = [""] * len(COLUMNS)
-		
-		# Add the reference of every component in the group and keep a reference
-		# to the component so that the other data can be filled in once per group
-		for c in group:
-			
-			fieldInfo = ""
-			
-			for i,field in enumerate(COLUMNS):
-				if field == "":
-					fieldInfo = ""
-					continue
-				try:
-					fieldInfo = c.getField(field)
-					
-					if (fieldInfo == ""): pass
-					else:
-						#if blank, set it!
-						if (fields[i] == ""): fields[i] = fieldInfo
-						elif (fields[i] == fieldInfo): pass #info is the same
-						elif (fieldInfo.lower() in fields[i].lower()): pass #info already contained
-						else:
-							fields[i] = fields[i] + ", " + fieldInfo #append new data
-				except:
-					pass
-                    
-		#if there are more than zero components in this group
-		if len(refs) > 0:
-			
-			#extract special data
-			fields[COL_REF] = refs
-			fields[COL_VALUE] = c.getValue()
-			fields[COL_DESC] = c.getDescription()
-			fields[COL_QUAN] = len(group)
-			fields[COL_FOOT] = c.getFootprint().split(":")[-1] 
-			
-			out.writerow(fields)
-			
-	#add extra data to the bottom of the file
-	out.writerow([])
-	out.writerow([])
-	out.writerow(['Component Count:', len(net.components)])
-	out.writerow(['Source:', net.getSource()])
-	out.writerow(['Date:', net.getDate()])
-	out.writerow(['Tool:', net.getTool()])
-			
-			
-	
-except:
-	debug("Error - " + str(sys.exc_info()[1]))
-
-try:		
-	f.close()
-	debug("Generated BOM for " + str(numComponents) + " components.")
-except:
-	pass
+close("Complete")

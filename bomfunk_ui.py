@@ -3,11 +3,7 @@ from PyQt4.QtGui import QFileDialog
 import sys
 import os
 
-localDir = os.path.split(sys.argv[0])[0]
-
-sys.path.append(os.getcwd())
-sys.path.append(localDir)
-
+print(sys.argv)
 
 from bomfunk_csv import CSV_DEFAULT as CSV_DEFAULT
 from bomfunk_csv import CSV_PROTECTED as CSV_PROTECTED
@@ -16,6 +12,8 @@ from bomfunk_csv import CSV_MATCH as CSV_MATCH
 import bomfunk_csv
 
 import bomfunk_netlist_reader
+
+ui_path = os.path.join(os.path.dirname(sys.argv[0]),"bomfunk.ui")
 
 #Cell Background Colors
 def colorProtected():
@@ -67,12 +65,13 @@ class BOMWidget(QtGui.QMainWindow):
             if self.csvFile == "" and arg.endswith(".csv") and os.path.isfile(arg):
                 self.csvFile = arg
 
-        if self.xmlFile and not self.xmlFile == "":
+        if not self.xmlFile == "":
+            self.extractKicadData()
             self.updateRows()
 
     def initUI(self):
         
-        uic.loadUi(localDir + os.sep + "bomfunk.ui", self)
+        uic.loadUi(ui_path, self)
 
         self.setWindowTitle("BOMFunk KiCAD BOM Manager")
 

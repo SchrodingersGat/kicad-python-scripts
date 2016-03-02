@@ -37,20 +37,21 @@
     <addaction name="action_loadCSV"/>
     <addaction name="separator"/>
     <addaction name="action_saveCSV"/>
+    <addaction name="action_saveNewCSV"/>
     <addaction name="separator"/>
-    <addaction name="actionExit"/>
+    <addaction name="action_exit"/>
    </widget>
    <addaction name="menu_File"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action_loadXML">
    <property name="text">
-    <string>&amp;Load KiCAD XML</string>
+    <string>&amp;Load KiCAD XML...</string>
    </property>
   </action>
   <action name="action_loadCSV">
    <property name="text">
-    <string>Load CSV File</string>
+    <string>Load CSV File...</string>
    </property>
   </action>
   <action name="action_saveCSV">
@@ -58,9 +59,14 @@
     <string>Save CSV File</string>
    </property>
   </action>
-  <action name="actionExit">
+  <action name="action_exit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="action_saveNewCSV">
+   <property name="text">
+    <string>Save New CSV File As...</string>
    </property>
   </action>
  </widget>

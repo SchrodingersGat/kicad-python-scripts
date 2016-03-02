@@ -1,9 +1,9 @@
 from PyQt5 import QtCore, QtGui, uic, QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMainWindow, QApplication
+from PyQt5.QtWidgets import QShortcut
+from PyQt5.QtGui import QKeyEvent, QKeySequence
 import sys
 import os
-
-print(sys.argv)
 
 from bomfunk_csv import CSV_DEFAULT as CSV_DEFAULT
 from bomfunk_csv import CSV_PROTECTED as CSV_PROTECTED
@@ -13,11 +13,19 @@ import bomfunk_csv
 
 import bomfunk_netlist_reader
 
+global UI_DEBUG
+UI_DEBUG = True
+
+def debug(*args):
+    global UI_DEBUG
+    if (UI_DEBUG):
+        print(" ".join(str(i) for i in args))
+
 ui_path = os.path.join(os.path.dirname(sys.argv[0]),"bomfunk.ui")
 
 #Cell Background Colors
 def colorProtected():
-    return QtGui.QColor(0xFF,0xCC,0xFF)
+    return QtGui.QColor(0xFF,0xD6,0xCC)
 
 def colorNormal():
     return QtGui.QColor(0xFF,0xFF,0xFF)
@@ -26,13 +34,13 @@ def colorConflict():
     return QtGui.QColor(0xFF,0x66,0x00)
 
 def colorCSV():
-    return QtGui.QColor(0x66,0xFF,0x66)
+    return QtGui.QColor(0xCC,0xFF,0xCC)
 
 def colorKiCAD():
     return QtGui.QColor(0x66,0xCC,0xFF)
 
 def colorError():
-    return QtGui.QColor(0xCC,0x00,0x00)
+    return QtGui.QColor(0xCC,0xE6,0xFF)
 
 class BOMWidget(QMainWindow):
 
@@ -65,16 +73,20 @@ class BOMWidget(QMainWindow):
         for arg in args:
             if self.xmlFile == "" and arg.endswith(".xml") and os.path.isfile(arg):
                 self.xmlFile = arg
+                debug("Passed XML File:",self.xmlFile)
             if self.csvFile == "" and arg.endswith(".csv") and os.path.isfile(arg):
                 self.csvFile = arg
+                debug("Passed CSV File:",self.csvFile)
 
         if self.xmlFile == "" and not self.csvFile == "":
             self.xmlFile = self.csvFile.replace(".csv",".xml")
+            debug("Trying XML File:", self.xmlFile)
             
         if not self.xmlFile == "":
 
             if self.csvFile == "":
                 self.csvFile = self.xmlFile.replace(".xml",".csv")
+                debug("Trying CSV File:",self.csvFile)
             
             self.extractKicadData()
             self.loadCSVFile(self.csvFile)
@@ -90,13 +102,25 @@ class BOMWidget(QMainWindow):
 
         #connect SIGNALS/SLOTS
         self.action_loadCSV.triggered.connect(self.loadCSV)
+
         self.action_loadXML.triggered.connect(self.loadXML)
+        self.action_loadXML.shortcut = QShortcut(QKeySequence("Ctrl+O"), self)
+        self.action_loadXML.shortcut.activated.connect(self.loadXML)
+
         self.action_saveCSV.triggered.connect(self.saveCSV)
+
+        #shortcut for saving CSV file
+        self.action_saveCSV.shortcut = QShortcut(QKeySequence("Ctrl+S"), self)
+        self.action_saveCSV.shortcut.activated.connect(self.saveCSV)
+
+        self.action_saveNewCSV.triggered.connect(self.saveCSVAs)
+        self.action_saveNewCSV.shortcut = QShortcut(QKeySequence("Ctrl+Shift+S"),self)
+        self.action_saveNewCSV.shortcut.activated.connect(self.saveCSVAs)
 
         self.table.cellChanged.connect(self.cellDataChanged)
 
         #close events
-        self
+        self.action_exit.triggered.connect(self.close)
 
     def updateHeadings(self):
         self.table.setColumnCount(len(self.headings))
@@ -104,16 +128,17 @@ class BOMWidget(QMainWindow):
         
     def loadCSV(self):
 
-        fname = QFileDialog.getOpenFileName(
+        fname, filter = QFileDialog.getOpenFileName(
             None,
             "Load .csv BoM File",
             os.getcwd(),
             "CSV Files (*.csv)")
 
-        self.loadCSVFile(self,fname[0])
+        self.loadCSVFile(self,fname)
 
     def loadCSVFile(self, fname):
 
+        debug("Loading CSV data from",fname)
         #blank file
         if not fname or str(fname)=="": return
 
@@ -135,20 +160,21 @@ class BOMWidget(QMainWindow):
 
     def loadXML(self):
 
-        fname = QFileDialog.getOpenFileName(
+        fname, filter = QFileDialog.getOpenFileName(
             None,
             "Load .xml KiCAD Netlist File",
             os.getcwd(),
             "XML Files (*.xml)")
 
-        self.loadXMLFile(str(fname[0]))
+        self.loadXMLFile(fname)
 
     def loadXMLFile(self, fname):
 
+        debug("Loading XML data from",fname)
         #blank file
-        if not fname or str(fname) == "": return
-
-        print("Loading:",fname)
+        if not fname or str(fname) == "":
+            debug("XML file invalid")
+            return
 
         if os.path.isfile(fname) and fname.endswith(".xml"):
             self.xmlFile = fname
@@ -159,27 +185,48 @@ class BOMWidget(QMainWindow):
 
         self.updateRows()
 
-    def saveCSV(self):
+    def saveCSVAs(self):
 
-        if not self.csvFile or not os.path.isfile(self.csvFile) or not self.csvFile.endswith(".csv"):
+        if self.getNewCSVFile():
+            self.writeCSVFile()
 
-            fname = str(QFileDialog.getSaveFileName(
+    def getNewCSVFile(self):
+
+        fname, filter = QFileDialog.getSaveFileName(
                 None,
                 "Save .csv BoM File",
                 os.getcwd(),
-                "CSV Files (*.csv)"))
+                "CSV Files (*.csv)")
 
-            if not fname:
-                return False
+        if not fname or fname == "":
+            return False
 
-            fname = fname[0]
+        if fname.endswith(".csv"):
+            self.csvFile = fname
+        else:
+            return False
 
-            if fname.endswith(".csv"):
-                self.csvFile = fname
-            else:
-                return False
+    def saveCSV(self):
 
-        return bomfunk_csv.saveRows(self.csvFile, self.componentGroups, self.kicadSource, self.kicadVersion, self.kicadDate)
+        if not self.csvFile or not self.csvFile.endswith(".csv"):
+
+            if self.getNewCSVFile():
+                self.writeCSVFile()
+
+        else:
+            self.writeCSVFile()
+
+    def writeCSVFile(self):
+
+        debug("Writing CSV data to",self.csvFile)
+
+        result = bomfunk_csv.saveRows(self.csvFile, self.componentGroups, self.kicadSource, self.kicadVersion, self.kicadDate)
+
+        if result:
+            debug("CSV Data Write OK")
+        else:
+            debug("Error writing CSV data")
+        return result
 
     def updateRows(self):
 
@@ -194,9 +241,13 @@ class BOMWidget(QMainWindow):
 
                 item = self.table.item(row,col)
 
+
                 if item == 0 or not item:
                     item = QtWidgets.QTableWidgetItem()
                     self.table.setItem(row,col,item)
+
+                #clear tool tip by default
+                item.setToolTip("")
 
                 kicadData = group.getField(heading)
                 csvData = group.getCSVField(heading)
@@ -205,29 +256,32 @@ class BOMWidget(QMainWindow):
 
                 if heading in CSV_PROTECTED:
                     item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
+                    item.setToolTip("Data in " + heading + " column cannot be edited")
                     if kicadData == "":
                         item.setBackground(colorError())
                     else:
                         item.setBackground(colorProtected())
                     data = kicadData
                 else:
-                    
+
                     item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+
+                    #default color
                     item.setBackground(colorNormal())
 
-                    if kicadData == "" and csvData == "": #no data exists
-                        pass
-                    elif kicadData == "": #no KiCAD data
-                        data = csvData
-                        item.setBackground(colorCSV())
-                    elif csvData == "": #no CSV data
+                    #KiCAD data takes preference!
+                    if not kicadData == "":
                         data = kicadData
                         item.setBackground(colorKiCAD())
-                    elif csvData == kicadData: #data matches!
-                        data = kicadData
-                    else: #conflict! (use KiCAD data in preference)
-                        data = kicadData
-                        item.setBackground(colorConflict())
+
+                        item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
+
+                        item.setToolTip(heading + " field exists for part. Cannot be edited")
+                    elif not csvData == "": #Data already exists in CSV File
+                        item.setBackground(colorCSV())
+                        data = csvData
+                    else:
+                        data = ""
 
                 item.setText(data)
 
@@ -237,9 +291,13 @@ class BOMWidget(QMainWindow):
 
         if not self.xmlFile or self.xmlFile == "": return
 
+        debug("Loading XML data from",self.xmlFile)
+
         net = bomfunk_netlist_reader.netlist(self.xmlFile)
 
-        if not net: return
+        if not net:
+            debug("Could not load netlist file")
+            return
 
         components = net.getInterestingComponents()
 
@@ -249,6 +307,8 @@ class BOMWidget(QMainWindow):
         self.kicadVersion = net.getVersion()
         self.kicadDate = net.getDate()
         self.kiacdTool = net.getTool()
+
+        debug("Loaded",len(components),"components in",len(self.componentGroups),"component groups")
 
     def getTableData(self,row,col):
 
@@ -283,10 +343,13 @@ class BOMWidget(QMainWindow):
         group = self.getGroupAtRow(row)
 
         if not group:
-            print("Group not found @",row,col)
+            debug("Group not found @",row,col)
         else:
-            print("Group @",row,col,">")
-            print(group.getRow(CSV_MATCH))
+            #update the CSV data for the group
+            item = self.table.item(row,col)
+            if not item: return
+
+            group.csvFields[self.headings[col]] = item.text()
 
     def closeEvent(self, *args, **kwargs):
         event = args[0]

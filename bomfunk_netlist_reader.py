@@ -432,6 +432,21 @@ class ComponentGroup():
         if not field in self.csvFields.keys(): return ""
         if not self.csvFields[field]: return ""
         return str(self.csvFields[field])
+
+    def getHarmonizedField(self,field):
+
+        #for protected fields, source from KiCAD
+        if field in CSV_PROTECTED:
+            return self.getField(field)
+
+        #if there is kicad data, that takes preference
+        if not self.getField(field) == "":
+            return self.getField(field)
+
+        elif not self.getCSVField(field) == "":
+            return self.getCSVField(field)
+        else:
+            return ""
         
         
     def compareCSVLine(self, line):
@@ -445,23 +460,15 @@ class ComponentGroup():
             
         return True
         
-    def addCSVLine(self, line):
-        
-        if not self.compareCSVLine(line): return
-        
-        for field in line.keys():
-            #don't overwrite protected columns
-            if field in CSV_PROTECTED: continue
-        
-            self.updateField(field, line[field])
-        
     def getCount(self):
         return len(self.components)
-        
+
+    #Test if a given component fits in this group
     def matchComponent(self, c):
         if len(self.components) == 0: return True
         if c == self.components[0]: return True
-        
+
+    #test if a given component is already contained in this grop
     def containsComponent(self, c):
         if self.matchComponent(c) == False: return False
         
@@ -469,21 +476,25 @@ class ComponentGroup():
             if comp.getRef() == c.getRef(): return True
             
         return False
-        
+
+    #add a component to the group
     def addComponent(self, c):
     
         if len(self.components) == 0:
             self.components.append(c)
-            
+        elif self.containsComponent(c):
+            return
         elif self.matchComponent(c):
             self.components.append(c)
-            
+
+    #return a list of the components
     def getRefs(self):
         #print([c.getRef() for c in self.components]))
         #return " ".join([c.getRef() for c in self.components]) 
         return " ".join([c.getRef() for c in self.components])
 
-    def sortRefs(self):
+    #sort the components in correct order
+    def sortComponents(self):
         self.components = sorted(self.components, key=lambda c: natural_sort(c.getRef()))   
         
     #update a given field, based on some rules and such
@@ -522,11 +533,21 @@ class ComponentGroup():
         self.fields["Description"] = self.components[0].getDescription()
 
         self.fields["Footprint"] = self.components[0].getFootprint().split(":")[-1]
-        
-    def getRow(self, columns):
+
+    #return a dict of the CSV data based on the supplied columns
+    def getCSVRow(self, columns):
+        row = [self.getCSVField(key) for key in columns]
+        return row
+
+    #return a dict of the KiCAD data based on the supplied columns
+    def getKicadRow(self, columns):
         row = [self.getField(key) for key in columns]
         #print(row)
         return row
+
+    #return a dict of harmonized data based on the supplied columns
+    def getHarmonizedRow(self,columns):
+        return [self.getHarmonizedField(key) for key in columns]
 
 class netlist():
     """ Kicad generic netlist class. Generally loaded from a kicad generic
@@ -781,7 +802,7 @@ class netlist():
             
         #sort the references within each group
         for g in groups:
-            g.sortRefs()
+            g.sortComponents()
             g.updateFields()
             
         #sort the groups by the first part in the group

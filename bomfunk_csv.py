@@ -55,7 +55,9 @@ def saveRows(filename, groups, source, version, date, delimiter=','):
         writer.writerow(CSV_DEFAULT)
         
         for group in groups:
-            writer.writerow(group.getRow(CSV_DEFAULT))
+            #CSV data is harmonized with KiCAD data
+            #KiCAD data takes preference
+            writer.writerow(group.getHarmonizedRow(CSV_DEFAULT))
             
         #write out extra data
         

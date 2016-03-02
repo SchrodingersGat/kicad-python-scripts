@@ -1,5 +1,5 @@
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtGui import QFileDialog
+from PyQt5 import QtCore, QtGui, uic, QtWidgets
+from PyQt5.QtWidgets import QFileDialog, QMainWindow, QApplication
 import sys
 import os
 
@@ -31,7 +31,10 @@ def colorCSV():
 def colorKiCAD():
     return QtGui.QColor(0x66,0xCC,0xFF)
 
-class BOMWidget(QtGui.QMainWindow):
+def colorError():
+    return QtGui.QColor(0xCC,0x00,0x00)
+
+class BOMWidget(QMainWindow):
 
     def __init__(self, args=[]):
     
@@ -78,7 +81,7 @@ class BOMWidget(QtGui.QMainWindow):
             self.updateRows()
 
     def initUI(self):
-        
+
         uic.loadUi(ui_path, self)
 
         self.setWindowTitle("BOMFunk KiCAD BOM Manager")
@@ -86,11 +89,14 @@ class BOMWidget(QtGui.QMainWindow):
         self.updateHeadings()
 
         #connect SIGNALS/SLOTS
-        QtCore.QObject.connect(self.action_loadCSV, QtCore.SIGNAL('triggered()'), self.loadCSV)
-        QtCore.QObject.connect(self.action_loadXML, QtCore.SIGNAL('triggered()'), self.loadXML)
-        QtCore.QObject.connect(self.action_saveCSV, QtCore.SIGNAL('triggered()'), self.saveCSV)
+        self.action_loadCSV.triggered.connect(self.loadCSV)
+        self.action_loadXML.triggered.connect(self.loadXML)
+        self.action_saveCSV.triggered.connect(self.saveCSV)
 
-        QtCore.QObject.connect(self.table, QtCore.SIGNAL('cellChanged(int,int)'), self.cellDataChanged)
+        self.table.cellChanged.connect(self.cellDataChanged)
+
+        #close events
+        self
 
     def updateHeadings(self):
         self.table.setColumnCount(len(self.headings))
@@ -104,12 +110,12 @@ class BOMWidget(QtGui.QMainWindow):
             os.getcwd(),
             "CSV Files (*.csv)")
 
-        self.loadCSVFile(self,fname)
+        self.loadCSVFile(self,fname[0])
 
     def loadCSVFile(self, fname):
 
         #blank file
-        if not fname: return
+        if not fname or str(fname)=="": return
 
         fname = str(fname)
 
@@ -135,14 +141,14 @@ class BOMWidget(QtGui.QMainWindow):
             os.getcwd(),
             "XML Files (*.xml)")
 
-        self.loadXMLFile(fname)
+        self.loadXMLFile(str(fname[0]))
 
     def loadXMLFile(self, fname):
 
         #blank file
-        if not fname: return
+        if not fname or str(fname) == "": return
 
-        fname = str(fname)
+        print("Loading:",fname)
 
         if os.path.isfile(fname) and fname.endswith(".xml"):
             self.xmlFile = fname
@@ -166,6 +172,8 @@ class BOMWidget(QtGui.QMainWindow):
             if not fname:
                 return False
 
+            fname = fname[0]
+
             if fname.endswith(".csv"):
                 self.csvFile = fname
             else:
@@ -187,10 +195,9 @@ class BOMWidget(QtGui.QMainWindow):
                 item = self.table.item(row,col)
 
                 if item == 0 or not item:
-                    item = QtGui.QTableWidgetItem()
+                    item = QtWidgets.QTableWidgetItem()
                     self.table.setItem(row,col,item)
 
-#                print("Heading:",heading,group.getField(heading))
                 kicadData = group.getField(heading)
                 csvData = group.getCSVField(heading)
 
@@ -198,26 +205,29 @@ class BOMWidget(QtGui.QMainWindow):
 
                 if heading in CSV_PROTECTED:
                     item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
-                    item.setBackgroundColor(colorProtected())
+                    if kicadData == "":
+                        item.setBackground(colorError())
+                    else:
+                        item.setBackground(colorProtected())
                     data = kicadData
                 else:
                     
                     item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
-                    item.setBackgroundColor(colorNormal())
+                    item.setBackground(colorNormal())
 
                     if kicadData == "" and csvData == "": #no data exists
                         pass
                     elif kicadData == "": #no KiCAD data
                         data = csvData
-                        item.setBackgroundColor(colorCSV())
+                        item.setBackground(colorCSV())
                     elif csvData == "": #no CSV data
                         data = kicadData
-                        item.setBackgroundColor(colorKiCAD())
+                        item.setBackground(colorKiCAD())
                     elif csvData == kicadData: #data matches!
                         data = kicadData
                     else: #conflict! (use KiCAD data in preference)
                         data = kicadData
-                        item.setBackgroundColor(colorConflict())
+                        item.setBackground(colorConflict())
 
                 item.setText(data)
 
@@ -240,15 +250,58 @@ class BOMWidget(QtGui.QMainWindow):
         self.kicadDate = net.getDate()
         self.kiacdTool = net.getTool()
 
+    def getTableData(self,row,col):
+
+        if row < 0 or row >= self.table.rowCount(): return ""
+        if col < 0 or col >= self.table.columnCount(): return ""
+        item = self.table.item(row,col)
+
+        if not item: return ""
+        return str(item.text())
+
+    def extractRowDataFromTable(self, row):
+
+        if row >= self.table.rowCount(): return {}
+        #return table row data as a dict
+        return dict(zip(self.headings,[self.getTableData(row,i) for i in range(len(self.headings))]))
+
+    def getGroupAtRow(self, row):
+
+        row_data = self.extractRowDataFromTable(row)
+
+        for group in self.componentGroups:
+
+            if group.compareCSVLine(row_data):
+                return group
+
+        return None
+
     def cellDataChanged(self,row,col):
 
         if self.reloading: return
-        print("Cell",row,col,"edited")
-                        
+
+        group = self.getGroupAtRow(row)
+
+        if not group:
+            print("Group not found @",row,col)
+        else:
+            print("Group @",row,col,">")
+            print(group.getRow(CSV_MATCH))
+
+    def closeEvent(self, *args, **kwargs):
+        event = args[0]
+
+        event.ignore()
+
+        ###do stuff here
+
+        print("Done")
+
+        event.accept()
 
 def main():
     
-    app = QtGui.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     ex = BOMWidget(sys.argv)
     sys.exit(app.exec_())
     

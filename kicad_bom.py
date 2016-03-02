@@ -105,16 +105,14 @@ try: #main try block (catch all errors)
 	
 	#extract the component info
 	for group in grouped:
-		refs = ""
+		refs = " ".join([c.getRef() for c in group])
 
 		###Extra fields that are supported by this script
 		fields = [""] * len(COLUMNS)
 		
 		# Add the reference of every component in the group and keep a reference
 		# to the component so that the other data can be filled in once per group
-		for component in group:
-			refs += component.getRef() + ", "
-			c = component
+		for c in group:
 			
 			fieldInfo = ""
 			
@@ -135,17 +133,9 @@ try: #main try block (catch all errors)
 							fields[i] = fields[i] + ", " + fieldInfo #append new data
 				except:
 					pass
-
-	# Output all of the component information
-	for group in grouped:
-
-
-
-
+                    
 		#if there are more than zero components in this group
 		if len(refs) > 0:
-			##delete thr trailing comma
-			refs = refs[:-2]
 			
 			#extract special data
 			fields[COL_REF] = refs

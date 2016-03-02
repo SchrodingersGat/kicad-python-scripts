@@ -22,6 +22,14 @@ import xml.sax as sax
 import re
 import pdb
 
+from bomfunk_csv import CSV_DEFAULT as CSV_DEFAULT
+from bomfunk_csv import CSV_PROTECTED as CSV_PROTECTED
+from bomfunk_csv import CSV_MATCH as CSV_MATCH
+
+#'better' sorting function which sorts by NUMERICAL value not ASCII
+def natural_sort(string):
+	return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)',string)]
+
 #-----<Configure>----------------------------------------------------------------
 
 # excluded_fields is a list of regular expressions.  If any one matches a field
@@ -404,6 +412,117 @@ class comp():
     def getDescription(self):
         return self.libpart.getDescription()
 
+class ComponentGroup():
+
+    def __init__(self):
+        self.components = []
+        self.fields = dict.fromkeys(CSV_DEFAULT)    #columns loaded from KiCAD
+        self.csvFields = dict.fromkeys(CSV_DEFAULT) #columns loaded from .csv file
+        
+    def getField(self, field):
+        if not field in self.fields.keys(): return ""
+        if not self.fields[field]: return ""
+        return str(self.fields[field])
+        
+    def getCSVField(self, field):
+    
+        #ignore protected fields
+        if field in CSV_PROTECTED: return ""
+    
+        if not field in self.csvFields.keys(): return ""
+        if not self.csvFields[field]: return ""
+        return str(self.csvFields[field])
+        
+    def compareCSVLine(self, line):
+        """
+        Compare a line (dict) and see if it matches this component group
+        """
+        for field in CSV_MATCH:
+            if not field in line.keys(): return False
+            if not field in self.fields.keys(): return False
+            if not line[field] == self.fields[field]: return False
+            
+        return True
+        
+    def addCSVLine(self, line):
+        
+        if not self.compareCSVLine(line): return
+        
+        for field in line.keys():
+            #don't overwrite protected columns
+            if field in CSV_PROTECTED: continue
+        
+            self.updateField(field, line[field])
+        
+    def getCount(self):
+        return len(self.components)
+        
+    def matchComponent(self, c):
+        if len(self.components) == 0: return True
+        if c == self.components[0]: return True
+        
+    def containsComponent(self, c):
+        if self.matchComponent(c) == False: return False
+        
+        for comp in self.components:
+            if comp.getRef() == c.getRef(): return True
+            
+        return False
+        
+    def addComponent(self, c):
+    
+        if len(self.components) == 0:
+            self.components.append(c)
+            
+        elif self.matchComponent(c):
+            self.components.append(c)
+            
+    def getRefs(self):
+        #print([c.getRef() for c in self.components]))
+        #return " ".join([c.getRef() for c in self.components]) 
+        return " ".join([c.getRef() for c in self.components])
+
+    def sortRefs(self):
+        self.components = sorted(self.components, key=lambda c: natural_sort(c.getRef()))   
+        
+    #update a given field, based on some rules and such
+    def updateField(self, field, fieldData):
+        
+        if field in CSV_PROTECTED: return
+
+        if (field == None or field == ""): return
+        elif fieldData == "" or fieldData == None:
+            return
+        elif (not field in self.fields.keys()) or (self.fields[field] == None) or (self.fields[field] == ""):
+            self.fields[field] = fieldData
+        elif fieldData.lower() in self.fields[field]:
+            return
+        else:
+            self.fields[field] += " " + fieldData
+        
+        
+    def updateFields(self):
+    
+        for f in CSV_DEFAULT:
+            
+            #get info from each field
+            for c in self.components:
+                
+                self.updateField(f, c.getField(f))
+                     
+        #update 'global' fields
+        self.fields["References"] = self.getRefs()
+
+        self.fields["Quantity"] = self.getCount()
+
+        self.fields["Value"] = self.components[0].getValue()
+
+        self.fields["Description"] = self.components[0].getDescription()
+
+        self.fields["Footprint"] = self.components[0].getFootprint().split(":")[-1]
+        
+    def getRow(self, columns):
+        return [self.fields[key] if key in self.fields.keys() else "" for key in columns]
 
 class netlist():
     """ Kicad generic netlist class. Generally loaded from a kicad generic
@@ -514,6 +633,15 @@ class netlist():
     def getTool(self):
         """Return the tool string which was used to create the netlist tree"""
         return self.design.get("tool")
+        
+    def getSheet(self):
+        return self.design.getChild("sheet")
+        
+    def getVersion(self):
+        """Return the verison of the sheet info"""
+        sheet = self.getSheet()
+        if sheet == None: return ""
+        return sheet.get("rev")
 
     def gatherComponentFieldUnion(self, components=None):
         """Gather the complete 'set' of unique component fields, fields found in any component.
@@ -632,36 +760,29 @@ class netlist():
             components = self.components
 
         groups = []
-
-        # Make sure to start off will all components ungrouped to begin with
+        
         for c in components:
-            c.grouped = False
-
-        # Group components based on the value, library and part identifiers
-        for c in components:
-            if c.grouped == False:
-                c.grouped = True
-                newgroup = []
-                newgroup.append(c)
-
-                # Check every other ungrouped component against this component
-                # and add to the group as necessary
-                for ci in components:
-                    if ci.grouped == False and ci == c:
-                        newgroup.append(ci)
-                        ci.grouped = True
-
-                # Add the new component group to the groups list
-                groups.append(newgroup)
-
-        # Each group is a list of components, we need to sort each list first
-        # to get them in order as this makes for easier to read BOM's
+            found = False
+            
+            for g in groups:
+                if g.matchComponent(c):
+                    g.addComponent(c)
+                    found = True
+                    break
+            
+            if not found:
+                g = ComponentGroup()
+                g.addComponent(c)
+                groups.append(g)
+            
+        #sort the references within each group
         for g in groups:
-            g = sorted(g, key=lambda g: g.getRef())
-
-        # Finally, sort the groups to order the references alphabetically
-        groups = sorted(groups, key=lambda group: group[0].getRef())
-
+            g.sortRefs()
+            g.updateFields()
+            
+        #sort the groups by the first part in the group
+        groups = sorted(groups, key = lambda g: natural_sort(g.components[0].getRef()))
+                
         return groups
 
     def getGroupField(self, group, field):

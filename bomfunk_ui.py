@@ -276,7 +276,15 @@ class BOMWidget(QMainWindow):
 
                         item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
 
-                        item.setToolTip(heading + " field exists for part. Cannot be edited")
+                        tt = heading + " field exists for part group (cannot be edited)"
+
+                        #work out which components are setting the data
+                        for comp in group.components:
+                            if not comp.getField(heading) == "":
+                                tt += "\n"
+                                tt += comp.getRef() + " - " + comp.getField(heading)
+
+                        item.setToolTip(tt)
                     elif not csvData == "": #Data already exists in CSV File
                         item.setBackground(colorCSV())
                         data = csvData

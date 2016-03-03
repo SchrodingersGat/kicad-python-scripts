@@ -89,10 +89,9 @@ if (os.path.exists(csv_file)) and (os.path.isfile(csv_file)):
                 group.csvFields = row
                 break
             
-    #make a temporary copy
-    shutil.copyfile(csv_file,csv_file + ".tmp")
-            
 #write out the datas
-bomfunk_csv.saveRows(csv_file, groups, net.getSource(), net.getVersion(), net.getDate())
-
-close("Complete")
+if bomfunk_csv.saveRows(csv_file, groups, net.getSource(), net.getVersion(), net.getDate()) == True:
+    close("Complete - saved data to " + csv_file)
+else:
+    close("Error writing to " + csv_file + ". Is it open?")
+    

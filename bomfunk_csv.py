@@ -1,5 +1,7 @@
 import csv
 import os
+import shutil
+
 
 """
 define standard CSV columns for BoM management
@@ -47,28 +49,43 @@ def getRows(filename, header_row=0, delimiter=','):
 def saveRows(filename, groups, source, version, date, delimiter=','):
     
     if not filename.endswith(".csv"): return
+
+    #first, save a temporary copy of any old file (in case something goes wrong)
+    if (os.path.exists(filename) and os.path.isfile(filename)):
+        shutil.copyfile(filename, filename + ".tmp")
+
+    try:
     
-    with open(filename,'w') as csv_write:
-        
-        writer = csv.writer(csv_write, delimiter=delimiter, lineterminator='\n')
-        
-        writer.writerow(CSV_DEFAULT)
-        
-        for group in groups:
-            #CSV data is harmonized with KiCAD data
-            #KiCAD data takes preference
-            writer.writerow(group.getHarmonizedRow(CSV_DEFAULT))
+        with open(filename,'w') as csv_write:
             
-        #write out extra data
-        
-        for i in range(5):
-            writer.writerow([])
+            writer = csv.writer(csv_write, delimiter=delimiter, lineterminator='\n')
             
-        writer.writerow(["Component Count:",len(groups)])
-        writer.writerow(["Source:",source])
-        writer.writerow(["Version:",version])
-        writer.writerow(["Date:",date])
-        
-        return True
-        
+            writer.writerow(CSV_DEFAULT)
+
+            componentCount = 0
+            
+            for group in groups:
+                #CSV data is harmonized with KiCAD data
+                #KiCAD data takes preference
+                writer.writerow(group.getHarmonizedRow(CSV_DEFAULT))
+
+                componentCount += group.getCount()
+                
+            #write out extra data
+            
+            for i in range(5):
+                writer.writerow([])
+
+
+            writer.writerow(["Component Count:",componentCount])
+            writer.writerow(["Component Groups:",len(groups)])
+            writer.writerow(["Source:",source])
+            writer.writerow(["Version:",version])
+            writer.writerow(["Date:",date])
+            
+            return True
+
+    except:
+        pass
+    
     return False

@@ -118,6 +118,7 @@ class BOMWidget(QMainWindow):
         self.action_saveNewCSV.shortcut.activated.connect(self.saveCSVAs)
 
         self.table.cellChanged.connect(self.cellDataChanged)
+        self.table.cellClicked.connect(self.cellClicked)
 
         #close events
         self.action_exit.triggered.connect(self.close)
@@ -134,18 +135,22 @@ class BOMWidget(QMainWindow):
             os.getcwd(),
             "CSV Files (*.csv)")
 
-        self.loadCSVFile(self,fname)
+        self.loadCSVFile(fname)
 
     def loadCSVFile(self, fname):
 
         debug("Loading CSV data from",fname)
         #blank file
-        if not fname or str(fname)=="": return
+        if not fname: return
 
         fname = str(fname)
 
         if os.path.isfile(fname) and fname.endswith(".csv"):
             self.csvFile = fname
+
+            #do we need to load an .xml file?
+            if not self.xmlFile:
+                self.loadXMLFile(self.csvFile.replace(".csv",".xml"))
 
             #read out the rows
             rows = bomfunk_csv.getRows(fname)
@@ -158,6 +163,8 @@ class BOMWidget(QMainWindow):
 
             self.updateRows()
 
+
+    #load an XML file (present user with dialog)
     def loadXML(self):
 
         fname, filter = QFileDialog.getOpenFileName(
@@ -183,6 +190,10 @@ class BOMWidget(QMainWindow):
 
         self.extractKicadData()
 
+        #if we don't have a csv file already, try to auto-load
+        if not self.csvFile:
+            self.loadCSVFile(self.xmlFile.replace(".xml",".csv"))
+
         self.updateRows()
 
     def saveCSVAs(self):
@@ -203,6 +214,7 @@ class BOMWidget(QMainWindow):
 
         if fname.endswith(".csv"):
             self.csvFile = fname
+            self.updateFileLabels()
         else:
             return False
 
@@ -228,10 +240,24 @@ class BOMWidget(QMainWindow):
             debug("Error writing CSV data")
         return result
 
+    def updateFileLabels(self):
+        if self.csvFile:
+            self.csvLabel.setText("CSV File: " + self.csvFile)
+        else:
+            self.csvLabel.setText("CSV File: < no file loaded >")
+
+
+        if self.xmlFile:
+            self.xmlLabel.setText("XML File: " + self.xmlFile)
+        else:
+            self.csvLabel.setText("XML File: < no file loaded>")
+
+    #update the table with data
     def updateRows(self):
 
         self.reloading = True
-        
+
+        self.updateFileLabels()
         self.updateHeadings()
         
         self.table.setRowCount(len(self.componentGroups))
@@ -344,6 +370,11 @@ class BOMWidget(QMainWindow):
 
         return None
 
+    #called when a cell is clicked
+    def cellClicked(self, row, col):
+        print("Clicked:",row,col)
+
+    #called when the contents of a cell are changed
     def cellDataChanged(self,row,col):
 
         if self.reloading: return

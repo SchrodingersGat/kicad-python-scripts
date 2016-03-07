@@ -46,7 +46,7 @@ def getRows(filename, header_row=0, delimiter=','):
         
         return rows
         
-def saveRows(filename, groups, source, version, date, delimiter=','):
+def saveRows(filename, groups, source, version, date, headings = CSV_DEFAULT, numberRows = True, delimiter=','):
     
     if not filename.endswith(".csv"): return
 
@@ -59,15 +59,24 @@ def saveRows(filename, groups, source, version, date, delimiter=','):
         with open(filename,'w') as csv_write:
             
             writer = csv.writer(csv_write, delimiter=delimiter, lineterminator='\n')
-            
-            writer.writerow(CSV_DEFAULT)
+
+            if (numberRows == True):
+                writer.writerow(["ID"] + headings)
+            else:
+                writer.writerow(headings)
 
             componentCount = 0
             
-            for group in groups:
+            for i,group in enumerate(groups):
                 #CSV data is harmonized with KiCAD data
                 #KiCAD data takes preference
-                writer.writerow(group.getHarmonizedRow(CSV_DEFAULT))
+
+                row = group.getHarmonizedRow(headings)
+
+                if (numberRows == True):
+                    row = [str(i+1)] + row
+
+                writer.writerow(row)
 
                 componentCount += group.getCount()
                 
@@ -85,7 +94,7 @@ def saveRows(filename, groups, source, version, date, delimiter=','):
             
             return True
 
-    except:
-        pass
+    except BaseException as e:
+        print(str(e))
     
     return False

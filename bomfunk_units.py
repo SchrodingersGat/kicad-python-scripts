@@ -5,7 +5,7 @@ PREFIX_MILLI = ["milli","m"]
 PREFIX_NANO = ["nano","n"]
 PREFIX_PICO = ["pico","p"]
 PREFIX_KILO = ["kilo","k"]
-PREFIX_MEGA = ["mega"]
+PREFIX_MEGA = ["mega","meg"]
 PREFIX_GIGA = ["giga","g"]
 
 PREFIX_ALL = PREFIX_PICO + PREFIX_NANO + PREFIX_MICRO + PREFIX_MILLI + PREFIX_KILO + PREFIX_MEGA + PREFIX_GIGA
@@ -15,6 +15,7 @@ UNIT_C = ["farad","f"]
 UNIT_L = ["henry","h"]
 
 UNIT_ALL = UNIT_R + UNIT_C + UNIT_L
+
 
 def getUnit(unit):
 

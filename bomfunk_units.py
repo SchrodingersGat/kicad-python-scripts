@@ -90,8 +90,6 @@ def compMatch(component): #return a reg-ex to match any component
 
 #compare two values
 def compareValues(c1, c2):
-
-    print(c1,c2)
     r1 = compMatch(c1)
     r2 = compMatch(c2)
 

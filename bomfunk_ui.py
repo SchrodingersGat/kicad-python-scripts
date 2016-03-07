@@ -206,6 +206,8 @@ class BOMWidget(QMainWindow):
         else:
             return False
 
+
+    #save the data to a CSV file
     def saveCSV(self):
 
         if not self.csvFile or not self.csvFile.endswith(".csv"):

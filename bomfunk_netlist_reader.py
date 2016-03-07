@@ -491,6 +491,7 @@ class ComponentGroup():
         return True
         
     def getCount(self):
+        if "dnf" in self.components[0].getValue().lower(): return "DNF"
         return len(self.components)
 
     #Test if a given component fits in this group

@@ -78,7 +78,10 @@ def saveRows(filename, groups, source, version, date, headings = CSV_DEFAULT, nu
 
                 writer.writerow(row)
 
-                componentCount += group.getCount()
+                try:
+                    componentCount += group.getCount()
+                except:
+                    pass
                 
             #write out extra data
             

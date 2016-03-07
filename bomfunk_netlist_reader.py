@@ -361,7 +361,14 @@ class comp():
     def __eq__(self, other):
         """Equlivalency operator, remember this can be easily overloaded"""
 
-        return self.compareValue(other) and self.compareFootprint(other) and self.compareLibName(other) and self.comparePartName(other)
+        #special case for connectors, as the "Value" is the description of the connector (and is somewhat meaningless)
+        if "connector" in self.getDescription().lower():
+            #ignore "value"
+            valueResult = True
+        else:
+            valueResult = self.compareValue(other)
+
+        return valueResult and self.compareFootprint(other) and self.compareLibName(other) and self.comparePartName(other)
 
     def setLibPart(self, part):
         self.libpart = part
@@ -552,6 +559,8 @@ class ComponentGroup():
         self.fields["Quantity"] = self.getCount()
 
         self.fields["Value"] = self.components[0].getValue()
+
+        self.fields["Part"] = self.components[0].getPartName()
 
         self.fields["Description"] = self.components[0].getDescription()
 

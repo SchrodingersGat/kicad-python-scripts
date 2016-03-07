@@ -8,7 +8,7 @@ define standard CSV columns for BoM management
 """
 
 #Standard CSV columns that will be printed
-CSV_DEFAULT = ["Description","References","Value","Footprint","Rating","Manufacturer","Part Number","Vendor","Vendor Code","Alt. Vendor","Alt. Vendor Code","Quantity","Price","Cost Per Board","Notes","Datasheet","URL"]
+CSV_DEFAULT = ["Part","Description","References","Value","Footprint","Rating","Manufacturer","Part Number","Vendor","Vendor Code","Alt. Vendor","Alt. Vendor Code","Quantity","Price","Cost Per Board","Notes","Datasheet","URL"]
 
 #these columns are ALWAYS updated from the schematic netlist
 CSV_PROTECTED = ["Description","References","Value","Footprint","Quantity"]

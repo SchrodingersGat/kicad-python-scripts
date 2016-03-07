@@ -18,6 +18,8 @@ UNIT_ALL = UNIT_R + UNIT_C + UNIT_L
 
 def getUnit(unit):
 
+    if not unit: return None
+    
     unit = unit.lower()
     
     if unit in UNIT_R: return "R"
@@ -28,6 +30,8 @@ def getUnit(unit):
 
 def getPrefix(prefix):
 
+    if not prefix: return 1
+    
     prefix = prefix.lower()
     
     if prefix in PREFIX_PICO: return 1.0e-12
@@ -41,51 +45,66 @@ def getPrefix(prefix):
     return 1
 
 def groupString(group): #return a reg-ex string for a list of values
-    return "[" + "|".join(group) + "]"
+    return "|".join(group)
 
 def matchString():
-    return "^([0-9]+)(\.*)(\d*)(" + groupString(PREFIX_ALL) + "?)(" + groupString(UNIT_ALL) + "+)(\d*)$"
+    return "^([0-9\.]+)(" + groupString(PREFIX_ALL) + ")*(" + groupString(UNIT_ALL) + ")*(\d*)$"
 
 
 def compMatch(component): #return a reg-ex to match any component
 
     #remove any commas
-    component = component.strip().replace(",","")
+    component = component.strip().replace(",","").lower()
 
     match = matchString()
 
-    result = re.search(match, component.lower())
+    result = re.search(match, component)
 
     if not result: return None
 
-    if not len(result.groups()) == 6: return None
+    if not len(result.groups()) == 4: return None
 
-    value,decimal,pre,prefix,units,post = result.groups()
+    value,prefix,units,post = result.groups()
 
-    if not getUnit(units): return None
+    #special case where units is in the middle of the string
+    #e.g. "0R05" for 0.05Ohm
+    #in this case, we will NOT have a decimal
+    #we will also have a trailing number
+
+    if post and "." not in value:
+        try:
+            value = float(int(value))
+            postValue = float(int(post)) / (10 ** len(post))
+            value = value * 1.0 + postValue
+        except:
+            return None
 
     try:
-        val = int(value)
+        val = float(value)
     except:
         return None
 
-    val = val * 1.0 * getPrefix(prefix)
+    val = "{0:.15f}".format(val * 1.0 * getPrefix(prefix))
 
     return (val, getUnit(units))
 
-tests = [
-    "15uH",
-    "27KOhm",
-    "15pF",
-    "100F",
-    "17,000R",
-    "33.333uF",
-    "22.1234R",
-    "1R05",
-    "test",
-    "13picofarad",
-    "15p"]
+#compare two values
+def compareValues(c1, c2):
 
-for t in tests:
-    print(t,compMatch(t))
+    print(c1,c2)
+    r1 = compMatch(c1)
+    r2 = compMatch(c2)
+
+    if not r1 or not r2: return False
+
+    (v1, u1) = r1
+    (v2, u2) = r2
+
+    if v1 == v2:
+        #values match
+        if u1 == u2: return True #units match
+        if not u1: return True #no units for component 1
+        if not u2: return True #no units for component 2
+
+    return False
         

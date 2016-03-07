@@ -26,6 +26,8 @@ from bomfunk_csv import CSV_DEFAULT as CSV_DEFAULT
 from bomfunk_csv import CSV_PROTECTED as CSV_PROTECTED
 from bomfunk_csv import CSV_MATCH as CSV_MATCH
 
+import bomfunk_units
+
 #'better' sorting function which sorts by NUMERICAL value not ASCII
 def natural_sort(string):
 	return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)',string)]
@@ -77,9 +79,10 @@ excluded_footprints = [
 
 # When comparing part names, components will match if they are both elements of the
 # same set defined here
-partname_alias_sets = [
-    ["c", "c_small"],
-    ["r", "r_small"]
+ALIASES = [
+    ["c", "c_small", "cap", "capacitor"],
+    ["r", "r_small", "res", "resistor"],
+    ["sw", "switch"]
     ]
 
 #-----</Configure>---------------------------------------------------------------
@@ -321,24 +324,44 @@ class comp():
         # Set to true when this component is included in a component group
         self.grouped = False
 
+    #compare the value of this part, to the value of another part (see if they match)
+    def compareValue(self, other):
+        #simple string comparison
+        if self.getValue().lower() == other.getValue().lower(): return True
+
+        #otherwise, perform a more complicate value comparison
+        if bomfunk_units.compareValues(self.getValue(), other.getValue()): return True
+
+        #no match, return False
+        return False
+
+    #compare footprint with another component
+    def compareFootprint(self, other):
+        return self.getFootprint().lower() == other.getFootprint().lower()
+
+    #compare the component library of this part to another part
+    def compareLibName(self, other):
+        return self.getLibName().lower() == other.getLibName().lower()
+
+    #determine if two parts have the same name
+    def comparePartName(self, other):
+        pn1 = self.getPartName().lower()
+        pn2 = other.getPartName().lower()
+
+        #simple direct match
+        if pn1 == pn2: return True
+
+        #compare part aliases e.g. "c" to "c_small"
+        for alias in ALIASES:
+            if pn1 in alias and pn2 in alias:
+                return True
+
+        return False
+
     def __eq__(self, other):
         """Equlivalency operator, remember this can be easily overloaded"""
-        result = False
-        if self.getValue().lower() == other.getValue().lower():
-            if self.getLibName() == other.getLibName():
-                if self.getFootprint() == other.getFootprint():
 
-                    this_partname = self.getPartName().lower()
-                    other_partname = other.getPartName().lower()
-
-                    if this_partname == other_partname:
-                        result = True
-                    else:
-                        for alias_set in partname_alias_sets:
-                            if this_partname in alias_set and other_partname in alias_set:
-                                result = True
-                
-        return result
+        return self.compareValue(other) and self.compareFootprint(other) and self.compareLibName(other) and self.comparePartName(other)
 
     def setLibPart(self, part):
         self.libpart = part

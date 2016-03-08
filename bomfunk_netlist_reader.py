@@ -85,6 +85,8 @@ ALIASES = [
     ["sw", "switch"]
     ]
 
+DNF = ["dnf", "do not fit", "nofit", "no stuff", "nostuff", "noload", "do not load"]
+
 #-----</Configure>---------------------------------------------------------------
 
 
@@ -279,6 +281,9 @@ class libpart():
     def getDescription(self):
         return self.element.get("description")
 
+    def getDocs(self):
+        return self.element.get("docs")
+
     def getField(self, name):
         return self.element.get("field", "name", name)
 
@@ -293,7 +298,16 @@ class libpart():
         return fieldNames
 
     def getDatasheet(self):
-        return self.getField("Datasheet")
+
+        datasheet = self.getField("Datasheet")
+
+        if not datasheet or datasheet == "":
+            docs = self.getDocs()
+
+            if "http" in docs or ".pdf" in docs:
+                datasheet = docs
+
+        return datasheet
 
     def getFootprint(self):
         return self.getField("Footprint")
@@ -343,6 +357,13 @@ class comp():
     def compareLibName(self, other):
         return self.getLibName().lower() == other.getLibName().lower()
 
+    def compareRating(self, other):
+        myRating = self.getField("Rating")
+        theirRating = other.getField("Rating")
+
+        #TODO
+        pass
+
     #determine if two parts have the same name
     def comparePartName(self, other):
         pn1 = self.getPartName().lower()
@@ -368,10 +389,20 @@ class comp():
         else:
             valueResult = self.compareValue(other)
 
-        return valueResult and self.compareFootprint(other) and self.compareLibName(other) and self.comparePartName(other)
+        return valueResult and self.compareFootprint(other) and self.compareLibName(other) and self.comparePartName(other) and self.isFitted() == other.isFitted()
 
     def setLibPart(self, part):
         self.libpart = part
+
+    def getPrefix(self): #return the reference prefix
+        #e.g. if this component has a reference U12, will return "U"
+        prefix = ""
+
+        for c in self.getRef():
+            if c.isalpha(): prefix += c
+            else: break
+
+        return prefix
 
     def getLibPart(self):
         return self.libpart
@@ -424,6 +455,16 @@ class comp():
     def getRef(self):
         return self.element.get("comp", "ref")
 
+    #determine if a component is FITTED or not
+    def isFitted(self):
+
+        check = [self.getValue().lower(), self.getField("Notes").lower()]
+
+        for item in check:
+            if any([dnf in item for dnf in DNF]): return False
+
+        return True
+
     def getFootprint(self, libraryToo=True):
         ret = self.element.get("footprint")
         if ret =="" and libraryToo:
@@ -431,10 +472,7 @@ class comp():
         return ret
 
     def getDatasheet(self, libraryToo=True):
-        ret = self.element.get("datasheet")
-        if ret == '' and libraryToo:
-            ret = self.libpart.getDatasheet()
-        return ret
+        return self.libpart.getDatasheet()
 
     def getTimestamp(self):
         return self.element.get("tstamp")
@@ -491,7 +529,8 @@ class ComponentGroup():
         return True
         
     def getCount(self):
-        if "dnf" in self.components[0].getValue().lower(): return "DNF"
+        for c in self.components:
+            if not c.isFitted(): return "0"
         return len(self.components)
 
     #Test if a given component fits in this group
@@ -517,6 +556,9 @@ class ComponentGroup():
             return
         elif self.matchComponent(c):
             self.components.append(c)
+
+    def isFitted(self):
+        return any([c.isFitted() for c in self.components])
 
     #return a list of the components
     def getRefs(self):
@@ -544,7 +586,6 @@ class ComponentGroup():
             print("Conflict:",self.fields[field],",",fieldData)
             self.fields[field] += " " + fieldData
         
-        
     def updateFields(self):
     
         for f in CSV_DEFAULT:
@@ -564,6 +605,8 @@ class ComponentGroup():
         self.fields["Part"] = self.components[0].getPartName()
 
         self.fields["Description"] = self.components[0].getDescription()
+
+        self.fields["Datasheet"] = self.components[0].getDatasheet()
 
         self.fields["Footprint"] = self.components[0].getFootprint().split(":")[-1]
 
@@ -837,9 +880,12 @@ class netlist():
         for g in groups:
             g.sortComponents()
             g.updateFields()
-            
+
+        #sort the groups
+        #first priority is the Type of component (e.g. R, U,
+        groups = sorted(groups, key=lambda g: [g.components[0].getPrefix(), g.components[0].getValue()])
         #sort the groups by the first part in the group
-        groups = sorted(groups, key = lambda g: natural_sort(g.components[0].getRef()))
+#        groups = sorted(groups, key = lambda g: natural_sort(g.components[0].getRef()))
                 
         return groups
 

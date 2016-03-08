@@ -8,3 +8,4 @@ Background color to show which fields have been edited by the user
 "Enter" key moves cursor down one cell
 Sort columns
 Press F5 to re-load xml file
+Order groups by first letter e.g. "R" "C" "L" of reference, and then by value

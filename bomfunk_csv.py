@@ -1,14 +1,16 @@
 import csv
 import os
 import shutil
-
+import bomfunk_units
 
 """
 define standard CSV columns for BoM management
 """
 
+
+
 #Standard CSV columns that will be printed
-CSV_DEFAULT = ["Part","Description","References","Value","Footprint","Rating","Manufacturer","Part Number","Vendor","Vendor Code","Alt. Vendor","Alt. Vendor Code","Quantity","Price","Cost Per Board","Notes","Datasheet","URL"]
+CSV_DEFAULT = ["Description","References","Value","Footprint","Rating","Manufacturer","Part Number","Vendor","Vendor Code","Quantity","Price","Cost Per Board","Notes","Datasheet","URL"]
 
 #these columns are ALWAYS updated from the schematic netlist
 CSV_PROTECTED = ["Description","References","Value","Footprint","Quantity"]
@@ -16,6 +18,8 @@ CSV_PROTECTED = ["Description","References","Value","Footprint","Quantity"]
 #these columns are used to match lines from a CSV file
 CSV_MATCH = ["Description","Value","Footprint"]
 
+#ignore these for .csv sent to fab
+CSV_IGNORE_FAB = ["Price","Cost Per Board","Datasheet","URL"]
 
 def getRows(filename, header_row=0, delimiter=','):
     
@@ -46,9 +50,11 @@ def getRows(filename, header_row=0, delimiter=','):
         
         return rows
         
-def saveRows(filename, groups, source, version, date, headings = CSV_DEFAULT, numberRows = True, delimiter=','):
+def saveRows(filename, groups, source, version, date, headings = CSV_DEFAULT, ignore = [], ignoreDNF=False, numberRows = True, delimiter=','):
     
     if not filename.endswith(".csv"): return
+
+    headings = [h for h in headings if h not in ignore]
 
     #first, save a temporary copy of any old file (in case something goes wrong)
     if (os.path.exists(filename) and os.path.isfile(filename)):
@@ -61,20 +67,24 @@ def saveRows(filename, groups, source, version, date, headings = CSV_DEFAULT, nu
             writer = csv.writer(csv_write, delimiter=delimiter, lineterminator='\n')
 
             if (numberRows == True):
-                writer.writerow(["ID"] + headings)
+                writer.writerow(["Component"] + headings)
             else:
                 writer.writerow(headings)
 
             componentCount = 0
+            rowCount = 1
             
             for i,group in enumerate(groups):
                 #CSV data is harmonized with KiCAD data
                 #KiCAD data takes preference
 
+                if ignoreDNF and not group.isFitted(): continue
+
                 row = group.getHarmonizedRow(headings)
 
                 if (numberRows == True):
-                    row = [str(i+1)] + row
+                    row = [rowCount] + row
+                    rowCount += 1
 
                 writer.writerow(row)
 

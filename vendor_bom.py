@@ -15,7 +15,7 @@ sys.path.append(os.getcwd())
 
 import bomfunk_netlist_reader
 import bomfunk_csv
-from bomfunk_csv import CSV_DEFAULT as COLUMNS
+from bomfunk_csv import CSV_DEFAULT as COLUMNS, CSV_IGNORE_FAB as IGNORE
 
 global DEBUG
 DEBUG = True
@@ -43,9 +43,12 @@ groups = []
 
 parser = argparse.ArgumentParser()
 parser.add_argument('net',help="KiCAD netlist file, .xml format",type=str,nargs=1)
+parser.add_argument("vendor",help="Vendor",type=str,nargs=1)
 args = parser.parse_args()
 
 xml_file = args.net[0]
+
+vendor = args.vendor[0].lower()
 
 #xml_file = "C:\\Users\\Oliver\\Google Drive\\Reverse GeoCache Box\\PCB\\USB_Geocache.xml"
 
@@ -68,13 +71,15 @@ net = bomfunk_netlist_reader.netlist(xml_file)
 components = net.getInterestingComponents()
 
 #group the components
-groups = net.groupComponents(components)
-   
+groups_all = net.groupComponents(components)
+
+#select only those that are sourced from digikey
+groups = [g for g in groups_all if vendor in g.getField("Vendor").lower()]
+
 #now, look for a corresponding .csv file (does it exist?)
-csv_file = xml_file.replace(".xml",".csv")
+csv_file = xml_file.replace(".xml","_" + vendor + ".csv")
 
 ###Re-load in the CSV values (if they match!)
-
 if (os.path.exists(csv_file)) and (os.path.isfile(csv_file)):
 
     lines = []
@@ -86,9 +91,9 @@ if (os.path.exists(csv_file)) and (os.path.isfile(csv_file)):
             if group.compareCSVLine(row):
                 group.csvFields = row
                 break
-            
+
 #write out the datas
-if bomfunk_csv.saveRows(csv_file, groups, net.getSource(), net.getVersion(), net.getDate()) == True:
+if bomfunk_csv.saveRows(csv_file, groups, net.getSource(), net.getVersion(), net.getDate(), ignore=IGNORE, ignoreDNF=True) == True:
     close("Complete - saved data to " + csv_file)
 else:
     close("Error writing to " + csv_file + ". Is it open?")

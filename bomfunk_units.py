@@ -89,6 +89,17 @@ def compMatch(component): #return a reg-ex to match any component
 
     return (val, getUnit(units))
 
+def componentValue(valString):
+
+    result = compMatch(valString)
+
+    if not result:
+        return valString #return the same string back
+
+    (val, unit) = result
+
+    return val
+
 #compare two values
 def compareValues(c1, c2):
     r1 = compMatch(c1)

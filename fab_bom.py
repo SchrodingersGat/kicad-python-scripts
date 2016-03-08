@@ -15,7 +15,7 @@ sys.path.append(os.getcwd())
 
 import bomfunk_netlist_reader
 import bomfunk_csv
-from bomfunk_csv import CSV_DEFAULT as COLUMNS
+from bomfunk_csv import CSV_DEFAULT as COLUMNS, CSV_IGNORE_FAB as IGNORE
 
 global DEBUG
 DEBUG = True
@@ -71,10 +71,9 @@ components = net.getInterestingComponents()
 groups = net.groupComponents(components)
    
 #now, look for a corresponding .csv file (does it exist?)
-csv_file = xml_file.replace(".xml",".csv")
+csv_file = xml_file.replace(".xml","_fab.csv")
 
 ###Re-load in the CSV values (if they match!)
-
 if (os.path.exists(csv_file)) and (os.path.isfile(csv_file)):
 
     lines = []
@@ -86,9 +85,9 @@ if (os.path.exists(csv_file)) and (os.path.isfile(csv_file)):
             if group.compareCSVLine(row):
                 group.csvFields = row
                 break
-            
+
 #write out the datas
-if bomfunk_csv.saveRows(csv_file, groups, net.getSource(), net.getVersion(), net.getDate()) == True:
+if bomfunk_csv.saveRows(csv_file, groups, net.getSource(), net.getVersion(), net.getDate(), ignore=IGNORE, ignoreDNF=True) == True:
     close("Complete - saved data to " + csv_file)
 else:
     close("Error writing to " + csv_file + ". Is it open?")

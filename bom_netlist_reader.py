@@ -256,8 +256,6 @@ class xmlElement():
 
         return ""
 
-
-
 class libpart():
     """Class for a library part, aka 'libpart' in the xml netlist file.
     (Components in eeschema are instantiated from library parts.)

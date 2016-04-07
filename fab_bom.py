@@ -87,7 +87,7 @@ if (os.path.exists(csv_file)) and (os.path.isfile(csv_file)):
                 break
 
 #write out the datas
-if bomfunk_csv.saveRows(csv_file, groups, net.getSource(), net.getVersion(), net.getDate(), ignore=IGNORE, ignoreDNF=True) == True:
+if bomfunk_csv.saveRows(csv_file, groups, net.getSource(), net.getVersion(), net.getDate(), ignore=IGNORE, ignoreDNF=False) == True:
     close("Complete - saved data to " + csv_file)
 else:
     close("Error writing to " + csv_file + ". Is it open?")

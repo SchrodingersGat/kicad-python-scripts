@@ -1,0 +1,1 @@
+BOM_HEADERS_DEFAULT = ["Reference","Description","Value","Footprint"]

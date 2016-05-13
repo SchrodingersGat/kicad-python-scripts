@@ -13,7 +13,7 @@ DELIMITER = ","
 
 sys.path.append(os.getcwd())
 
-import bomfunk_netlist_reader
+import bom_netlist_reader
 import bomfunk_csv
 from bomfunk_csv import CSV_DEFAULT as COLUMNS
 
@@ -62,7 +62,7 @@ if not xml_file.endswith(".xml"):
     error(xml_file + " is not a .xml file")
 
 #read out the netlist
-net = bomfunk_netlist_reader.netlist(xml_file)
+net = bom_netlist_reader.netlist(xml_file)
 
 #extract the components
 components = net.getInterestingComponents()

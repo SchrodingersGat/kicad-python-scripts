@@ -1,0 +1,21 @@
+FDMS8350LET40,N-Channel PowerTrench® MOSFET ,/datasheets/FD/FDMS8350LET40.pdf,-55 to 175 °C,40,,,1,49
+FDMT80060DC,N-Channel Dual CoolTM 88 PowerTrench® MOSFET,/datasheets/FD/FDMT80060DC.pdf,-55 to 150 °C,60,1.1m?@VGS=10.0V<br/>1.3m?@VGS=8.0V,238nC@VGS=10.0V<br/>192nC@VGS=8.0V,2.5,43
+FDMT80080DC,N-Channel Dual CoolTM 88 PowerTrench® MOSFET,/datasheets/FD/FDMT80080DC.pdf,-55 to 150 °C,80,1.35m?@VGS=10.0V<br/>1.82m?@VGS=8.0V,273nC@VGS=10.0V<br/>223nC@VGS=8.0V,2,36
+FDMT800120DC,N-Channel Dual CoolTM  88 PowerTrench® MOSFET,/datasheets/FD/FDMT800120DC.pdf,-55 to 150 °C,120,4.2m?@VGS=10.0V<br/>6.4m?@VGS=6.0V,107nC@VGS=10.0V<br/>68nC@VGS=6.0V,2,20
+FDMT800100DC,"N-Channel Dual Cool™ 88 PowerTrench® MOSFET 100 V, 162 A, 2.95 m?    ",/datasheets/FD/FDMT800100DC.pdf,-55 to 150 °C,100,2.95m?@VGS=10.0V<br/>4.46m?@VGS=6.0V,111nC@VGS=10.0V<br/>70nC@VGS=6.0V,2,24
+FDMT800150DC,"N-Channel Dual CoolTM  88 PowerTrench® MOSFET 150 V, 99 A, 6.5  m?",/datasheets/FD/FDMT800150DC.pdf,-55 to 150 °C,150,6.5m?@VGS=10.0V<br/>8.4m?@VGS=6.0V,108nC@VGS=10.0V<br/>69nC@VGS=6.0V,2,15
+FDMT800152DC,"N-Channel Dual Cool™ 88 PowerTrench® MOSFET 150 V, 72 A, 9.0 m?",/datasheets/FD/FDMT800152DC.pdf,-55 to 150 °C,150,9.0m?@VGS=10.0V<br/>11.5m?@VGS=6.0V,83nC@VGS=10.0V<br/>53nC@VGS=6.0V,2,13
+FDMS8050ET30,N-Channel PowerTrench® MOSFET,/datasheets/FD/FDMS8050ET30.pdf,-55 to 175 °C,30,0.65m?@VGS=10.0V<br/>0.9m?@VGS=4.5V,285nC@VGS=10.0V<br/>130nC@VGS=4.5V,1,55
+FDMS86202ET120,N-Channel Shielded Gate PowerTrench® MOSFET,/datasheets/FD/FDMS86202ET120.pdf,-55 to 175 °C,120,7.2m?@VGS=10.0V<br/>10.3m?@VGS=6.0V,64nC@VGS=10.0V<br/>41nC@VGS=6.0V,2,13.5
+FDMS86150ET100,N-Channel PowerTrench® MOSFET ,/datasheets/FD/FDMS86150ET100.pdf,-55 to 175 °C,100,4.85m?@VGS=10.0V<br/>7.8m?@VGS=6.0V,62nC@VGS=10.0V<br/>35nC@VGS=5.0V,2,16
+FDMS86255ET150,N-Channel Shielded Gate PowerTrench® MOSFET,/datasheets/FD/FDMS86255ET150.pdf,-55 to 175 °C,150,12.4m?@VGS=10.0V<br/>15.5m?@VGS=6.0V,63nC@VGS=10.0V<br/>41nC@VGS=6.0V,2,10
+FDMS86350ET80,N-Channel PowerTrench® MOSFET,/datasheets/FD/FDMS86350ET80.pdf,-55 to 175 °C,80,2.4m?@VGS=10.0V<br/>3.2m?@VGS=8.0V,155nC@VGS=10.0V<br/>127nC@VGS=8.0V,2.5,25
+FDMS86550ET60,N-Channel PowerTrench® MOSFET,/datasheets/FD/FDMS86550ET60.pdf,-55 to 175 °C,60,1.65m?@VGS=10.0V<br/>2.2m?@VGS=8.0V,154nC@VGS=10.0V<br/>126nC@VGS=8.0V,2.5,32
+FDMS8050,N-Channel PowerTrench® MOSFET,/datasheets/FD/FDMS8050.pdf,-55 to 150 °C,30,0.65m?@VGS=10.0V<br/>0.9m?@VGS=4.5V,285nC@VGS=10.0V<br/>130nC@VGS=4.5V,1,55
+FDMS8350L,N-Channel PowerTrench® MOSFET,/datasheets/FD/FDMS8350L.pdf,-55 to 150 °C,40,0.85m?@VGS=10.0V<br/>1.2m?@VGS=4.5V,242nC@VGS=10.0V<br/>113nC@VGS=4.5V,1,47
+FDMS86255,N-Channel Shielded Gate PowerTrench® MOSFET ,/datasheets/FD/FDMS86255.pdf,-55 to 150 °C,150,12.4m?@VGS=10.0V<br/>15.5m?@VGS=6.0V,63nC@VGS=10.0V<br/>41nC@VGS=6.0V,2,10
+FDMS86550,N-Channel PowerTrench® MOSFET,/datasheets/FD/FDMS86550.pdf,-55 to 150 °C,60,1.65m?@VGS=10.0V<br/>2.2m?@VGS=8.0V,154nC@VGS=10.0V<br/>126nC@VGS=8.0V,2.5,32
+FDMS86202,N-Channel Shielded Gate PowerTrench® MOSFET,/datasheets/FD/FDMS86202.pdf,-55 to 150 °C,120,7.2m?@VGS=10.0V<br/>10.3m?@VGS=6.0V,64nC@VGS=10.0V<br/>41nC@VGS=6.0V,2,13.5
+FDMS86350,N-Channel PowerTrench® MOSFET,/datasheets/FD/FDMS86350.pdf,-55 to 150 °C,80,2.4m?@VGS=10.0V<br/>3.2m?@VGS=8.0V,155nC@VGS=10.0V<br/>127nC@VGS=8.0V,2.5,25
+FDMS86152,N-Channel PowerTrench® MOSFET,/datasheets/FD/FDMS86152.pdf,-55 to 150 °C,100,6m?@VGS=10.0V<br/>11m?@VGS=6.0V,50nC@VGS=10.0V<br/>33nC@VGS=6.0V,2,14
+FDMS86150,N-Channel PowerTrench® MOSFET,/datasheets/FD/FDMS86150.pdf,-55 to 150 °C,100,4.85m?@VGS=10.0V<br/>7.8m?@VGS=6.0V,62nC@VGS=10.0V<br/>35nC@VGS=5.0V,2,16

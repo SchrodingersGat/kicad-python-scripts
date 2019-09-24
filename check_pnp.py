@@ -66,7 +66,7 @@ with open(pnp_filename, 'r') as pnpfile:
         if len(line) == 0:
             continue
 
-        fields = re.split('\s*', line)
+        fields = re.split('\s+', str(line.strip()))
 
         if not len(fields) == 7:
             raise ValueError('Incorrect BOM line: ' + line)
@@ -150,9 +150,11 @@ for ref in bom_refs:
     # Should this part be fitted, or not?
     DNF = 'dnf' in bom_item['Quantity'].lower()
 
+    # Part is NOT to be fitted - make sure it IS NOT in the PNP file
     if DNF:
         if ref in pnp_refs:
             extra_in_pnp.append(ref)
+    # Part IS to be fitted - make sure it IS in the PNP file
     else:
         if ref not in pnp_refs:
             missing_from_pnp.append(ref)

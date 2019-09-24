@@ -2,3 +2,7 @@
 
 *.kicad_mod
 .idea/
+
+# BOM files
+*.csv
+*.pos

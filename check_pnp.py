@@ -77,12 +77,12 @@ with open(pnp_filename, 'r') as pnpfile:
             raise ValueError('Duplicate RefDes: ' + ref)
 
         group = {
-            'val': fields[1],
-            'fp': fields[2],
-            'x': fields[3],
-            'y': fields[4],
-            'r': fields[5],
-            'side': fields[6],
+            'Value': fields[1],
+            'Footprint': fields[2],
+            'X': fields[3],
+            'Y': fields[4],
+            'Rotation': fields[5],
+            'Side': fields[6],
         }
 
         pnp_items[ref] = group

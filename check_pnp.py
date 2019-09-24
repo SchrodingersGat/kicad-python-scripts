@@ -155,6 +155,21 @@ for ref in bom_refs:
     else:
         if ref not in pnp_refs:
             missing_from_pnp.append(ref)
+        else:
+            # Extract this part from the PNP file
+            pnp_item = pnp_items[ref]
+
+            # Read footprint data
+            fp_bom = bom_item['Footprint']
+            fp_pnp = pnp_item['Footprint']
+
+            if not fp_bom == fp_pnp:
+                text = "{ref} footprint mismatch - BOM: '{bom}', PNP: '{pnp}'".format(
+                    ref=ref,
+                    bom=fp_bom,
+                    pnp=fp_pnp
+                )
+                pnp_errors.append(text)
 
 for ref in pnp_refs:
     if ref not in bom_refs:

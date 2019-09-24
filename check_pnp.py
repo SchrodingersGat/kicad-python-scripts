@@ -90,6 +90,7 @@ with open(pnp_filename, 'r') as pnpfile:
 
 # Map each element in the BOM file to the RefDes
 bom_items = {}
+dnf_count = 0
 
 # Read the BOM file
 with open(bom_filename, 'r') as bomfile:
@@ -131,11 +132,6 @@ with open(bom_filename, 'r') as bomfile:
         for ref in refs:
             bom_items[ref] = row_data
 
-print("Loaded Component Data:")
-print("BOM Items: {n}".format(n=len(bom_items)))
-print("PNP Items: {n}".format(n=len(pnp_items)))
-print("---------------------")
-
 missing_from_bom = []
 missing_from_pnp = []
 extra_in_pnp = []
@@ -152,6 +148,7 @@ for ref in bom_refs:
 
     # Part is NOT to be fitted - make sure it IS NOT in the PNP file
     if DNF:
+        dnf_count += 1
         if ref in pnp_refs:
             extra_in_pnp.append(ref)
     # Part IS to be fitted - make sure it IS in the PNP file
@@ -171,6 +168,14 @@ if len(missing_from_pnp) > 0:
 
 if len(extra_in_pnp) > 0:
     pnp_errors.append("{n} DNF parts included in PNP file: {refs}".format(n=len(extra_in_pnp), refs=extra_in_pnp))
+
+print("Loaded Component Data:")
+bom_str = "BOM items: {n}".format(n=len(bom_items))
+if dnf_count > 0:
+    bom_str += " (DNF: {n})".format(n=dnf_count)
+print(bom_str)
+print("PNP Items: {n}".format(n=len(pnp_items)))
+print("---------------------")
 
 # Finally, print any pending error messages
 if len(bom_errors) > 0:

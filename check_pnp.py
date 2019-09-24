@@ -159,7 +159,7 @@ for ref in bom_refs:
             # Extract this part from the PNP file
             pnp_item = pnp_items[ref]
 
-            # Read footprint data
+            # Check footprint data
             fp_bom = bom_item['Footprint']
             fp_pnp = pnp_item['Footprint']
 
@@ -170,6 +170,20 @@ for ref in bom_refs:
                     pnp=fp_pnp
                 )
                 pnp_errors.append(text)
+
+            # Check value data
+            val_bom = bom_item['Value']
+            val_pnp = pnp_item['Value']
+
+            if not val_bom == val_pnp:
+                text = "{ref} value mismatch - BOM '{bom}', PNP: '{pnp}'".format(
+                    ref=ref,
+                    bom=val_bom,
+                    pnp=val_pnp
+                )
+
+                pnp_errors.append(text)
+
 
 for ref in pnp_refs:
     if ref not in bom_refs:

@@ -102,7 +102,12 @@ with open(bom_filename, 'r') as bomfile:
 
         # First row contains the column headers
         if i == 0:
-            headers = row
+            headers = []
+            for h in row:
+                if h.startswith('Quantity'):
+                    h = 'Quantity'
+
+                headers.append(h)
             continue
 
         # First empty row signifies end of file
@@ -112,12 +117,13 @@ with open(bom_filename, 'r') as bomfile:
         row_data = {}
 
         for idx, val in enumerate(row):
+            header = headers[idx]
             row_data[headers[idx]] = val
 
         # Extract the part references
         refs = row_data['References'].split(' ')
 
-        quantity = int(row_data['Quantity Per PCB'].strip().split(' ')[0])
+        quantity = int(row_data['Quantity'].strip().split(' ')[0])
 
         if not len(refs) == quantity:
             bom_errors.append('Quantity mismatch: {refs} != {q}'.format(refs=refs, q=quantity))
@@ -132,18 +138,28 @@ print("---------------------")
 
 missing_from_bom = []
 missing_from_pnp = []
+extra_in_pnp = []
 
 bom_refs = bom_items.keys()
 pnp_refs = pnp_items.keys()
 
 for ref in bom_refs:
-    if ref not in pnp_refs:
-        missing_from_pnp.append(ref)
+
+    bom_item = bom_items[ref]
+
+    # Should this part be fitted, or not?
+    DNF = 'dnf' in bom_item['Quantity'].lower()
+
+    if DNF:
+        if ref in pnp_refs:
+            extra_in_pnp.append(ref)
+    else:
+        if ref not in pnp_refs:
+            missing_from_pnp.append(ref)
 
 for ref in pnp_refs:
     if ref not in bom_refs:
         missing_from_bom.append(ref)
-
 
 if len(missing_from_bom) > 0:
     bom_errors.append("{n} parts missing from BOM file: {refs}".format(n=len(missing_from_bom), refs=missing_from_bom))
@@ -151,6 +167,8 @@ if len(missing_from_bom) > 0:
 if len(missing_from_pnp) > 0:
     pnp_errors.append("{n} parts missing from PNP file: {refs}".format(n=len(missing_from_pnp), refs=missing_from_pnp))
 
+if len(extra_in_pnp) > 0:
+    pnp_errors.append("{n} DNF parts included in PNP file: {refs}".format(n=len(extra_in_pnp), refs=extra_in_pnp))
 
 # Finally, print any pending error messages
 if len(bom_errors) > 0:

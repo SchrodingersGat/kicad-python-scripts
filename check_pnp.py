@@ -25,6 +25,9 @@ parser = argparse.ArgumentParser(description='KiCad fabrication file checker')
 
 parser.add_argument('-b', '--bom', help='Bill of Materials file')
 parser.add_argument('-p', '--pnp', help='Pick and Place file')
+parser.add_argument('-r', '--remove', help='Remove any lines in PNP file that are DNF or missing from BOM', action='store_true')
+parser.add_argument('-i', '--partnumber', help='Add the MPN as a column to PNP file', action='store_true')
+parser.add_argument('-o', '--output', help='Pick and Place output file')
 
 args = parser.parse_args()
 
@@ -44,6 +47,15 @@ if not bom_filename.endswith('.csv'):
 
 if not os.path.exists(bom_filename):
     raise FileNotFoundError('BOM file not found: {f}'.format(f=bom_filename))
+
+pnp_filename_tokens = pnp_filename.split(".")
+if args.output:
+    modified_pnp_filename = args.output
+elif args.remove or args.partnumber:
+    modified_pnp_filename = ".".join(pnp_filename_tokens[:-1]) + "_modified." + pnp_filename_tokens[-1]
+else:
+    # The user hasn't asked to output the file to a specific filename, nor have they asked to modify it (which uses the default '_modified' suffix if nothing is provided)
+    modified_pnp_filename = None
 
 # Map each line in the PNP file to the RefDes
 pnp_items = {}
@@ -126,6 +138,8 @@ with open(bom_filename, 'r') as bomfile:
 
         quantity = int(row_data['Quantity'].strip().split(' ')[0])
 
+        #mpn = row_data['Part Number'].strip()
+
         if not len(refs) == quantity:
             bom_errors.append('Quantity mismatch: {refs} != {q}'.format(refs=refs, q=quantity))
         
@@ -175,7 +189,8 @@ for ref in bom_refs:
             val_bom = bom_item['Value']
             val_pnp = pnp_item['Value']
 
-            if not val_bom == val_pnp:
+            # BOM can have spaces in fields, PNP uses underscores
+            if not val_bom.replace(' ', '_') == val_pnp:
                 text = "{ref} value mismatch - BOM '{bom}', PNP: '{pnp}'".format(
                     ref=ref,
                     bom=val_bom,
@@ -216,5 +231,54 @@ if len(pnp_errors) > 0:
     print("There are {n} issues found in the PNP file:".format(n=len(pnp_errors)))
     for e in pnp_errors:
         print("\t- {e}".format(e=e))
+
+if modified_pnp_filename:
+    with open(pnp_filename, 'r') as pnpfile, open(modified_pnp_filename, 'w') as newpnpfile:
+
+        # We're going to do some alignment of the columns:
+        # The last column is side, and it will read 'top' or 'bottom'
+        # We'd like to pad that so it reads either 'top.....' or 'bottom..'
+        # (where . is a space)
+    
+        for line in pnpfile.readlines():
+            # Comment lines are passed straight through
+            # whitespace lines too
+            if line.startswith('#') or (len(line.strip()) == 0):
+                # except for the header line, if we are adding the part number column
+                if re.split('\s+', str(line.strip()))[-1] == 'Side':
+                    line = line.strip() + '    PartNumber\n'
+                print(line, file=newpnpfile, end='')
+                continue
+
+            fields = re.split('\s+', str(line.strip()))
+
+            # PnP file has a fixed 7 columns, this can't be changed in KiCad anywhere?
+            if not len(fields) == 7:
+                raise ValueError('Incorrect PNP line: ' + line)
+
+            ref = fields[0]
+            bom_item = bom_items[ref]
+
+            if args.remove and ref in extra_in_pnp:
+                print(f"Removed {ref} from PNP file")
+                continue
+            
+            if args.partnumber:
+                # Note the assumption that a BOM will have a column with header 'Part Number' is hard coded here,
+                # but then so are some other assumptions about the BOM header
+                mpn = bom_item['Part Number'].strip()
+                
+                if not mpn:
+                    print(f"{ref} has no 'Part Number' specified!")
+        
+                line = line.strip("\n")
+                side = re.split('\s+', str(line.strip()))[-1]
+                if side == 'top':
+                    line = line[:-3] + 'top     '
+                elif side == 'bottom':
+                    line = line[:-6] + 'bottom  '
+                line = line + f"{mpn}\n"
+
+            print(line, file=newpnpfile, end='')
 
 sys.exit(len(bom_errors) + len(pnp_errors))
